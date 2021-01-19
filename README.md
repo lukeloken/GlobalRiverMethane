@@ -1,7 +1,8 @@
 # GlobalRiverMethane (GRiMe)
 
-A repo to analyze global dataset of methane concentrations and fluxes in
-flowing waters
+A repo to enable Emily’s methane problem. Bonus features include
+functions and scripts to analyze a global dataset of methane in flowing
+waters.
 
 ### Setup
 
