@@ -5,10 +5,12 @@ flowing waters
 
 ### Setup
 
-This repo only contains scripts and example data. To use the functions
-and scripts in this package, you will create an object with the dropbox
-directory. All functions will access and create files within your local
-copy of the dropbox folder.
+This repo only contains scripts and example data. The data, analyses,
+figures, etc. are saved on your local dropbox folder. To use the
+functions and scripts in this package, you will create an R object with
+the path to your local dropbox directory. You should only need to do
+this once, and all functions will access and create files within that
+folder.
 
 ``` r
 path_to_dropbox <- "Your/local/dropbox/folder"
@@ -21,3 +23,7 @@ path_to_dropbox <- "Your/local/dropbox/folder"
 ```
 
 ### More to be added
+
+``` r
+# Example code
+```
