@@ -19,7 +19,12 @@ path_to_dropbox <- "Your/local/dropbox/folder"
 path_to_dropbox <- "C:/Users/lloken/OneDrive - DOI/GlobalRiverMethane"
 ```
 
-### I have saved a converted rda file in the dropbox folder that contains several dataframes from the MethDB excel file. Some of column names have been changed to remove blanks.
+There is a .rda file in the dropbox folder that contains several data
+tables from the MethDB excel file. Some of column names have been
+changed to remove blanks. These include `conc_df`, `flux_df`,
+`sites_df`, `papers_df`, and `gis_df`. Both the concentrations and flux
+tables have been converted to a common unit (uM and mmol m-2 d-1) for
+all variables (CH4, CO2, N2O, nutrients)
 
 ``` r
 
