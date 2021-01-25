@@ -15,8 +15,8 @@ folder.
 
 ``` r
 #Replace with your own dropbox folder location
-path_to_dropbox <- "Your/local/dropbox/folder"
-path_to_dropbox <- "C:/Users/lloken/OneDrive - DOI/GlobalRiverMethane"
+path_to_dropbox <- "C:/Users/emsta/Dropbox/MethDB2.0" #Emily's folder
+path_to_dropbox <- "C:/Users/lloken/OneDrive - DOI/GlobalRiverMethane" #Luke's USGS computer
 ```
 
 There is a .rda file in the dropbox folder that contains several data
