@@ -47,9 +47,13 @@ load(file.path(path_to_dropbox, "db_processingR",
                "MethDB_tables_converted.rda"))
 
 head(conc_df)
+
 head(flux_df)
+
 head(sites_df)
+
 head(papers_df)
+
 head(gis_df)
 
 ```

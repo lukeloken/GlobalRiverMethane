@@ -62,6 +62,7 @@ head(conc_df)
 #> #   Comments <chr>, Elevation_m <dbl>, new_CH4unit <chr>, new_CO2unit <chr>,
 #> #   new_N2Ounit <chr>, new_NO3unit <chr>, new_NH4unit <chr>, new_TNunit <chr>,
 #> #   new_TPunit <chr>, new_SRPunit <chr>, new_DOCunit <chr>, new_Qunit <chr>
+
 head(flux_df)
 #> # A tibble: 6 x 55
 #>   Publication_Nid Site_Nid SiteName Flux_Nid FluxName `SampleDate(start)~
@@ -91,6 +92,7 @@ head(flux_df)
 #> #   Comments <chr>, new_CH4DiffusiveFluxunit <chr>,
 #> #   new_CH4BubbleFluxunit <chr>, new_CH4TotalFluxunit <chr>,
 #> #   new_CO2Fluxunit <chr>, new_N2OFluxunit <chr>
+
 head(sites_df)
 #> # A tibble: 6 x 23
 #>   Publication_Nid Site_Nid SiteName StreamName `Aggregated?` NSitesAggregated
@@ -106,6 +108,7 @@ head(sites_df)
 #> #   Landuse <chr>, Channeltype <chr>, SystemSize <chr>, StrahlerOrder <dbl>,
 #> #   Depth_m <chr>, Width_m <dbl>, `avgQm3/s` <chr>, Catchmentsizekm2 <chr>,
 #> #   `Targeted?` <chr>, Comments <chr>, ...23 <chr>
+
 head(papers_df)
 #> # A tibble: 6 x 10
 #>   Title Authorlastname Journal PubYear Publication_Nid `Additionaldata~
@@ -118,6 +121,7 @@ head(papers_df)
 #> 6 Meth~ Anthony        Limnol~ 2012               7171 yes             
 #> # ... with 4 more variables: `Embargo?` <chr>, `2xcheck` <chr>, Comments <chr>,
 #> #   ...10 <chr>
+
 head(gis_df)
 #> # A tibble: 6 x 303
 #>   Site_Nid       z lat_old lon_old   lat   lon   z_new   slope geometry hybas_id
