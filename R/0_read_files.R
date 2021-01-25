@@ -11,36 +11,36 @@ source("R/convert_unit_functions.R")
 unit_convert_table <- readRDS("R/unit_convert_table.rds")
 
 #load GIS data
-gis <- read_csv(file.path(path_to_dropbox, "db_processingR", 
+gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
                           "methdb_explore", "data", 
                           "methdb_gis.csv")) %>% 
   rename(Site_Nid =site_nid) 
 
 #load methdb papers table
-papers <- read_excel(file.path(path_to_dropbox, MethDB_filename),
+papers_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "Papers",  guess_max = 250)  %>% 
   drop_na(Publication_Nid) %>%
   select_if(~sum(!is.na(.)) > 0)
 
 #rename columns
-names(papers) <- gsub(" ", "", names(papers))
+names(papers_df) <- gsub(" ", "", names(papers_df))
 
 
 #load methdb site table
-sites <- read_excel(file.path(path_to_dropbox, MethDB_filename),
+sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "Sites", guess_max = 3500)  %>% 
   mutate(Site_Nid = as.character(Site_Nid)) %>%
   distinct(Site_Nid, .keep_all = TRUE)
 
 #rename columns
-names(sites) <- gsub(" ", "", names(sites))
-names(sites) <- gsub("\\(m\\)", "_m", names(sites))
+names(sites_df) <- gsub(" ", "", names(sites_df))
+names(sites_df) <- gsub("\\(m\\)", "_m", names(sites_df))
 
 #load methdb concentration table and bind with elevation
 concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename), 
                              sheet = "Concentrations", guess_max = 14000) %>% 
   mutate(Site_Nid = as.character(Site_Nid)) %>%
-  left_join(select(sites, Site_Nid, Elevation_m))
+  left_join(select(sites_df, Site_Nid, Elevation_m))
 
 #rename columns
 names(concentrations) <- gsub(" ", "", names(concentrations))
@@ -54,11 +54,11 @@ names(fluxes) <- gsub(" ", "", names(fluxes))
 
 #Convert concentration and fluxes to uM and mmol m-2 d-1
 
-concentrations_converted <- convert_conc_units(concentrations, unit_convert_table)
-fluxes_converted <- convert_flux_units(fluxes, unit_convert_table)
+conc_df <- convert_conc_units(concentrations, unit_convert_table)
+flux_df <- convert_flux_units(fluxes, unit_convert_table)
 
-save(concentrations_converted, fluxes_converted, 
-     sites, papers, gis,
+save(conc_df, flux_df, 
+     sites_df, papers_df, gis_df,
      file = file.path(path_to_dropbox, "db_processingR", 
                       "MethDB_tables_converted.rda"))
 
@@ -66,39 +66,39 @@ load(file.path(path_to_dropbox, "db_processingR",
                "MethDB_tables_converted.rda"))
 
 #Quick plots of distributions
-ggplot(concentrations_converted) +
+ggplot(conc_df) +
   geom_histogram(aes(x = CH4mean)) +
   scale_x_log10()
 
-ggplot(concentrations_converted) +
+ggplot(conc_df) +
   geom_histogram(aes(x = CH4min)) +
   scale_x_log10()
 
-ggplot(concentrations_converted) +
+ggplot(conc_df) +
   geom_histogram(aes(x = CH4max)) +
   scale_x_log10()
 
-ggplot(concentrations_converted) +
+ggplot(conc_df) +
   geom_histogram(aes(x = CH4median)) +
   scale_x_log10()
 
-ggplot(fluxes_converted) +
+ggplot(flux_df) +
   geom_histogram(aes(x = DiffusiveCH4FluxMean)) +
   scale_x_log10()
 
-ggplot(fluxes_converted) +
+ggplot(flux_df) +
   geom_histogram(aes(x = BubbleCH4FluxMean)) +
   scale_x_log10()
 
-ggplot(fluxes_converted) +
+ggplot(flux_df) +
   geom_histogram(aes(x = TotalCH4FluxMean)) +
   scale_x_log10()
 
-ggplot(fluxes_converted) +
+ggplot(flux_df) +
   geom_histogram(aes(x = CO2FluxMean)) +
   scale_x_log10()
 
-ggplot(fluxes_converted) +
+ggplot(flux_df) +
   geom_histogram(aes(x = N2OFluxMean)) +
   scale_x_log10()
 
