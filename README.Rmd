@@ -30,17 +30,43 @@ A repo to enable Emily's methane problem. Bonus features include functions and s
 This repo only contains scripts and example data. The data, analyses, figures, etc. are saved on your local dropbox folder. To use the functions and scripts in this package, you will create an R object with the path to your local dropbox directory. You should only need to do this once, and all functions will access and create files within that folder.  
 
 ```{r}
+#Replace with your own dropbox folder location
 path_to_dropbox <- "Your/local/dropbox/folder"
+path_to_dropbox <- "C:/Users/lloken/OneDrive - DOI/GlobalRiverMethane"
+
 ```
+### I have saved a converted rda file in the dropbox folder that contains several dataframes from the MethDB excel file. Some of column names have been changed to remove blanks. 
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+
+# load formatted and converted tables into your R environment
+load(file.path(path_to_dropbox, "db_processingR", 
+               "MethDB_tables_converted.rda"))
+
+head(conc_df)
+head(flux_df)
+head(sites_df)
+head(papers_df)
+head(gis_df)
+
+```
+
 ### Example
 
 ```{r}
-# Example code
-```
+CH4mean_hist_fig <- ggplot(conc_df) +
+  geom_histogram(aes(x = CH4mean)) +
+  scale_x_log10()
 
-### More to be added
+print(CH4mean_hist_fig)
 
-```{r}
-# Example code
+# Save to dropbox or another folder
+# ggsave(file.path(path_to_dropbox, "db_processingR", 
+#                  "Figures", "CH4_meanconc_hist.png"),
+#        CH4mean_hist_fig)
+
 ```
 
