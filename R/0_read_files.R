@@ -59,9 +59,11 @@ fluxes_converted <- convert_flux_units(fluxes, unit_convert_table)
 
 save(concentrations_converted, fluxes_converted, 
      sites, papers, gis,
-     file = "R/Meth_tables_converted.rda")
+     file = file.path(path_to_dropbox, "db_processingR", 
+                      "MethDB_tables_converted.rda"))
 
-load("R/Meth_tables_converted.rda")
+load(file.path(path_to_dropbox, "db_processingR", 
+               "MethDB_tables_converted.rda"))
 
 #Quick plots of distributions
 ggplot(concentrations_converted) +

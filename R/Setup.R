@@ -6,3 +6,6 @@
 path_to_dropbox <- "C:/Users/lloken/OneDrive - DOI/GlobalRiverMethane"
 MethDB_filename <- "MethDB_EHS_18Jan21.xlsx"
 
+# load formatted and converted tables into your R environment
+load(file.path(path_to_dropbox, "db_processingR", 
+               "MethDB_tables_converted.rda"))
