@@ -54,8 +54,6 @@ head(sites_df)
 
 head(papers_df)
 
-head(gis_df)
-
 ```
 
 ### Example
@@ -67,7 +65,7 @@ CH4mean_hist_fig <- ggplot(conc_df) +
 
 print(CH4mean_hist_fig)
 
-# Save to dropbox or another folder
+# Save image to dropbox or another folder
 # ggsave(file.path(path_to_dropbox, "db_processingR", 
 #                  "Figures", "CH4_meanconc_hist.png"),
 #        CH4mean_hist_fig)
