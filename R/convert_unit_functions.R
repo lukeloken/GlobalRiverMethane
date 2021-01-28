@@ -14,20 +14,20 @@ estimate_pressure <- function(elevation){
 # LakeKh is in ("Kh, cp") = (mol/L*Atm) at STP
 
 getKh <- function(temperature, gas){
-  Kh  <-  data.frame("O2"=c(1.3*10^-3, 1700))
-  Kh <- cbind(Kh,"H2"=c(7.8*10^-4,500))
-  Kh <- cbind(Kh,"CO2"= c(3.4*10^-2, 2400 ))
-  Kh <- cbind(Kh,"N2"=c(6.1*10^-4, 1300))
-  Kh <- cbind(Kh,"He"=c(3.7*10^-4, 230))
-  Kh <- cbind(Kh,"Ne"=c(4.5*10^-4,490))
-  Kh <- cbind(Kh,"Ar"=c(1.4*10^-3, 1300))
-  Kh <- cbind(Kh,"CO"=c(9.5*10^-4,1300))
-  Kh <- cbind(Kh, "O3"=c(1.2*10^-2, 2300))
-  Kh <- cbind(Kh, "N2O"=c(2.5*10^-2, 2600))
-  Kh <- cbind(Kh, "SF6"=c(2.4*10^-4, 2400))
-  Kh <- cbind(Kh, "CH4"=c(1.4*10^-3, 1700))
-  Kh <- cbind(Kh, "C3H8"=c(1.4*10^-3, 2700))
-  Kh <- cbind(Kh, "NH3"=c(5.6*10^1, 4200))
+  Kh <- data.frame("O2" = c(1.3*10^-3, 1700))
+  Kh <- cbind(Kh, "H2"  = c(7.8*10^-4, 500))
+  Kh <- cbind(Kh, "CO2" = c(3.4*10^-2, 2400 ))
+  Kh <- cbind(Kh, "N2"  = c(6.1*10^-4, 1300))
+  Kh <- cbind(Kh, "He"  = c(3.7*10^-4, 230))
+  Kh <- cbind(Kh, "Ne"  = c(4.5*10^-4, 490))
+  Kh <- cbind(Kh, "Ar"  = c(1.4*10^-3, 1300))
+  Kh <- cbind(Kh, "CO"  = c(9.5*10^-4, 1300))
+  Kh <- cbind(Kh, "O3"  = c(1.2*10^-2, 2300))
+  Kh <- cbind(Kh, "N2O" = c(2.5*10^-2, 2600))
+  Kh <- cbind(Kh, "SF6" = c(2.4*10^-4, 2400))
+  Kh <- cbind(Kh, "CH4" = c(1.4*10^-3, 1700))
+  Kh <- cbind(Kh, "C3H8"= c(1.4*10^-3, 2700))
+  Kh <- cbind(Kh, "NH3" = c(5.6*10^1 , 4200))
   
   if (!is.character(gas)){stop(paste('gas must be a character. was given as',gas))}
   if (!any(names(Kh)==gas)){stop(paste(gas,'not found in list of coded gases'))}
@@ -43,21 +43,21 @@ getKh <- function(temperature, gas){
 # Concentrations (mole fraction, also ppmv) in the atmosphere are approximate for 2013, should be updated over time
 # AtmP is in (atmospheres)
 
-# Function to calcualte gas saturation 
+# Function to calculate gas saturation 
 
 getSaturation <- function(LakeKh, AtmP, gas){
-  Atmosphere  <-  data.frame("O2"=209460)
-  Atmosphere <- cbind(Atmosphere,"H2"=0.55)
-  Atmosphere <- cbind(Atmosphere, "N2"=780840)
-  Atmosphere <- cbind(Atmosphere, "Ar"=9340)
-  Atmosphere <-cbind(Atmosphere, "CO2"=400)
-  Atmosphere <-cbind(Atmosphere, "He"=5.24)
-  Atmosphere <-cbind(Atmosphere, "Ne"=18.18)
-  Atmosphere <- cbind(Atmosphere, "CH4"= 1.83)
-  Atmosphere <- cbind(Atmosphere, "O3"=0.07)#potential max concentration
-  Atmosphere <-cbind(Atmosphere, "N2O"= 0.325)
-  Atmosphere <-cbind(Atmosphere, "CO"=0.1)
-  Atmosphere <-cbind(Atmosphere, "NH3"=NA)
+  Atmosphere <-        data.frame("O2"  = 209460)
+  Atmosphere <- cbind(Atmosphere, "H2"  = 0.55)
+  Atmosphere <- cbind(Atmosphere, "N2"  = 780840)
+  Atmosphere <- cbind(Atmosphere, "Ar"  = 9340)
+  Atmosphere <- cbind(Atmosphere, "CO2" = 400)
+  Atmosphere <- cbind(Atmosphere, "He"  = 5.24)
+  Atmosphere <- cbind(Atmosphere, "Ne"  = 18.18)
+  Atmosphere <- cbind(Atmosphere, "CH4" = 1.83)
+  Atmosphere <- cbind(Atmosphere, "O3"  = 0.07)#potential max concentration
+  Atmosphere <- cbind(Atmosphere, "N2O" = 0.325)
+  Atmosphere <- cbind(Atmosphere, "CO"  = 0.1)
+  Atmosphere <- cbind(Atmosphere, "NH3" = NA)
   
   if (!is.character(gas)){stop(paste('gas must be a character. was given as',gas))}
   if (!any(names(Atmosphere)==gas)){stop(paste(gas,'not found in list of coded gases'))}
