@@ -30,8 +30,10 @@ all variables (CH4, CO2, N2O, nutrients)
 
 library(dplyr)
 library(ggplot2)
-# library(gridExtra)
 library(grid)
+
+#Load custom ggplot functions
+source("R/ggplot2_utils.R")
 
 # load formatted and converted tables into your R environment
 load(file.path(path_to_dropbox, "db_processingR", 
@@ -125,12 +127,22 @@ head(papers_df)
 #> #   ...10 <chr>
 ```
 
-### Example
+### Example figures
+
+Let’s plot the distribution of mean CH4, CO2, and N2O concentration and
+fluxes.
 
 ``` r
+
+commontheme <- list(
+  theme_bw(), 
+  scale_x_log10nice(omag = seq(-20, 20, 2)), 
+  scale_y_continuous(expand = expansion(mult = c(0, .05)))
+)
+
 CH4mean_hist_fig <- ggplot(conc_df) +
   geom_histogram(aes(x = CH4mean)) +
-  scale_x_log10() 
+  commontheme
 
 print(CH4mean_hist_fig)
 ```
@@ -146,34 +158,36 @@ print(CH4mean_hist_fig)
 
 CO2mean_hist_fig <- ggplot(conc_df) +
   geom_histogram(aes(x = CO2mean)) +
-  scale_x_log10() +
-  theme(axis.title.y = element_blank())
+  theme(axis.title.y = element_blank()) + 
+  commontheme
 
 # print(CO2mean_hist_fig)
 
 N2Omean_hist_fig <- ggplot(conc_df) +
   geom_histogram(aes(x = N2Omean)) +
-  scale_x_log10() +
+  commontheme +
   theme(axis.title.y = element_blank())
+
 
 # print(N2Omean_hist_fig)
 
 CH4meanflux_hist_fig <- ggplot(flux_df) +
   geom_histogram(aes(x = DiffusiveCH4FluxMean)) +
-  scale_x_log10() 
+  commontheme
 
 # print(CH4meanflux_hist_fig)
 
 CO2meanflux_hist_fig <- ggplot(flux_df) +
   geom_histogram(aes(x = CO2FluxMean)) +
-  scale_x_log10() +
+  commontheme +
   theme(axis.title.y = element_blank())
+
 
 # print(CO2meanflux_hist_fig)
 
 N2Omeanflux_hist_fig <- ggplot(flux_df) +
   geom_histogram(aes(x = N2OFluxMean)) +
-  scale_x_log10() +
+  commontheme + 
   theme(axis.title.y = element_blank())
 
 # print(N2Omeanflux_hist_fig)
@@ -183,13 +197,13 @@ N2Omeanflux_hist_fig <- ggplot(flux_df) +
 #     height = 7, width = 8, units = "in")
 
 grid.newpage()
-plots<-grid.draw(rbind(cbind(ggplotGrob(CH4mean_hist_fig),
-                             ggplotGrob(CO2mean_hist_fig), 
-                             ggplotGrob(N2Omean_hist_fig)),
-                       cbind(ggplotGrob(CH4meanflux_hist_fig),
-                             ggplotGrob(CO2meanflux_hist_fig),
-                             ggplotGrob(N2Omeanflux_hist_fig)),
-                       size = "first"))
+plots <- grid.draw(rbind(cbind(ggplotGrob(CH4mean_hist_fig),
+                               ggplotGrob(CO2mean_hist_fig), 
+                               ggplotGrob(N2Omean_hist_fig)),
+                         cbind(ggplotGrob(CH4meanflux_hist_fig),
+                               ggplotGrob(CO2meanflux_hist_fig),
+                               ggplotGrob(N2Omeanflux_hist_fig)),
+                         size = "first"))
 ```
 
 ![](man/figures/unnamed-chunk-4-2.png)<!-- -->
