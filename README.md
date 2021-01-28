@@ -173,7 +173,6 @@ N2Omean_hist_fig <- ggplot(conc_df) +
   commontheme +
   theme(axis.title.y = element_blank())
 
-
 # print(N2Omean_hist_fig)
 
 CH4meanflux_hist_fig <- ggplot(flux_df) +
@@ -187,7 +186,6 @@ CO2meanflux_hist_fig <- ggplot(flux_df) +
   commontheme +
   theme(axis.title.y = element_blank())
 
-
 # print(CO2meanflux_hist_fig)
 
 N2Omeanflux_hist_fig <- ggplot(flux_df) +
@@ -197,6 +195,7 @@ N2Omeanflux_hist_fig <- ggplot(flux_df) +
 
 # print(N2Omeanflux_hist_fig)
 
+# To save this figure use package "grid" 
 # png(file.path(path_to_dropbox, "db_processingR", 
 #                  "Figures", "Mean_gas_concflux.png"), 
 #     height = 7, width = 8, units = "in")
