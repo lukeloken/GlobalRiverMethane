@@ -82,6 +82,14 @@ ggplot(conc_df) +
   scale_x_log10()
 
 ggplot(conc_df) +
+  geom_histogram(aes(x = CO2mean)) +
+  scale_x_log10()
+
+ggplot(conc_df) +
+  geom_histogram(aes(x = N2Omean)) +
+  scale_x_log10()
+
+ggplot(conc_df) +
   geom_histogram(aes(x = CH4min)) +
   scale_x_log10()
 

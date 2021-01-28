@@ -198,7 +198,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   concentrations_out <- concentrations_out %>%
     left_join(filter(unit_convert_table, variable == "N2O"), 
               by = c("orig_N2Ounit" = "unit")) %>%
-    mutate(factor = ifelse(orig_CO2unit %in% unit_convert_table$unit, 
+    mutate(factor = ifelse(orig_N2Ounit %in% unit_convert_table$unit, 
                            factor, 
                            1))  %>% 
     mutate(across(.cols = c("N2Omin", 
