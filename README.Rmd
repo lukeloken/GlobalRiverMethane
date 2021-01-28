@@ -79,7 +79,7 @@ CH4mean_hist_fig <- ggplot(conc_df) +
 print(CH4mean_hist_fig)
 
 # Save image to dropbox or another folder
-# ggsave(file.path(path_to_dropbox, "db_processingR", 
+# ggsave(file.path(path_to_dropbox, "db_processingR",
 #                  "Figures", "CH4_meanconc_hist.png"),
 #        CH4mean_hist_fig)
 
@@ -123,9 +123,11 @@ N2Omeanflux_hist_fig <- ggplot(flux_df) +
 # print(N2Omeanflux_hist_fig)
 
 # To save this figure use package "grid" 
-# png(file.path(path_to_dropbox, "db_processingR", 
-#                  "Figures", "Mean_gas_concflux.png"), 
-#     height = 7, width = 8, units = "in")
+# Need to uncomment png() and dev.off()
+
+# png(file.path(path_to_dropbox, "db_processingR",
+#                  "Figures", "Mean_gas_concflux.png"),
+#     height = 6, width = 8, units = "in", res = 300)
 
 grid.newpage()
 plots <- grid.draw(rbind(cbind(ggplotGrob(CH4mean_hist_fig),
