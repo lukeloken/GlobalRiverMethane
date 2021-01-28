@@ -129,8 +129,7 @@ head(papers_df)
 
 ### Example figures
 
-Let’s plot the distribution of mean CH4, CO2, and N2O concentration and
-fluxes.
+Let’s plot the distribution of mean CH4 concentration.
 
 ``` r
 
@@ -155,11 +154,17 @@ print(CH4mean_hist_fig)
 # ggsave(file.path(path_to_dropbox, "db_processingR", 
 #                  "Figures", "CH4_meanconc_hist.png"),
 #        CH4mean_hist_fig)
+```
+
+Let’s plot the distribution of mean CH4, CO2, and N2O concentration and
+fluxes.
+
+``` r
 
 CO2mean_hist_fig <- ggplot(conc_df) +
   geom_histogram(aes(x = CO2mean)) +
-  theme(axis.title.y = element_blank()) + 
-  commontheme
+  commontheme +
+  theme(axis.title.y = element_blank())
 
 # print(CO2mean_hist_fig)
 
@@ -206,7 +211,7 @@ plots <- grid.draw(rbind(cbind(ggplotGrob(CH4mean_hist_fig),
                          size = "first"))
 ```
 
-![](man/figures/unnamed-chunk-4-2.png)<!-- -->
+![](man/figures/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 

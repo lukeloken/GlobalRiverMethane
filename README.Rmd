@@ -62,9 +62,9 @@ head(papers_df)
 
 ### Example figures
 
-Let's plot the distribution of mean CH4, CO2, and N2O concentration and fluxes. 
+Let's plot the distribution of mean CH4 concentration. 
 
-```{r}
+```{r, fig.width = 4, fig.height = 4}
 
 commontheme <- list(
   theme_bw(), 
@@ -83,10 +83,15 @@ print(CH4mean_hist_fig)
 #                  "Figures", "CH4_meanconc_hist.png"),
 #        CH4mean_hist_fig)
 
+```
+Let's plot the distribution of mean CH4, CO2, and N2O concentration and fluxes. 
+
+```{r}
+
 CO2mean_hist_fig <- ggplot(conc_df) +
   geom_histogram(aes(x = CO2mean)) +
-  theme(axis.title.y = element_blank()) + 
-  commontheme
+  commontheme +
+  theme(axis.title.y = element_blank())
 
 # print(CO2mean_hist_fig)
 
