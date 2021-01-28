@@ -86,7 +86,7 @@ print(CH4mean_hist_fig)
 ```
 Let's plot the distribution of mean CH4, CO2, and N2O concentration and fluxes. 
 
-```{r, fig.width = 7, fig.height = 6}
+```{r, fig.width = 8, fig.height = 6}
 
 CO2mean_hist_fig <- ggplot(conc_df) +
   geom_histogram(aes(x = CO2mean)) +
