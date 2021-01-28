@@ -30,6 +30,8 @@ all variables (CH4, CO2, N2O, nutrients)
 
 library(dplyr)
 library(ggplot2)
+# library(gridExtra)
+library(grid)
 
 # load formatted and converted tables into your R environment
 load(file.path(path_to_dropbox, "db_processingR", 
@@ -52,7 +54,7 @@ head(conc_df)
 #> #   CO2stdev <dbl>, CO2median <dbl>, orig_CO2unit <chr>,
 #> #   CO2measurementtype <chr>, N2Omin <dbl>, N2Omax <dbl>, N2Omean <dbl>,
 #> #   N2Ostdev <dbl>, N2Omedian <dbl>, orig_N2Ounit <chr>, WaterTempactual <dbl>,
-#> #   WaterTempEst <dbl>, `ConduS/cm` <chr>, pH <chr>, `DOmg/L` <dbl>,
+#> #   WaterTempest <dbl>, `ConduS/cm` <chr>, pH <chr>, `DOmg/L` <dbl>,
 #> #   `DO%sat` <dbl>, NO3actual <dbl>, NO3aggregated <dbl>, orig_NO3unit <chr>,
 #> #   NH4actual <dbl>, NH4aggregated <dbl>, orig_NH4unit <chr>, TNactual <dbl>,
 #> #   TNaggregated <dbl>, orig_TNunit <chr>, SRPactual <dbl>,
@@ -73,7 +75,7 @@ head(flux_df)
 #> 4            2222     1001 Kytalyk~ Kytalyk~ 2016-08-01 00:00:00
 #> 5            2222     1001 Kytalyk~ Kytalyk~ 2016-08-05 00:00:00
 #> 6            2222     1001 Kytalyk~ Kytalyk~ 2016-08-08 00:00:00
-#> # ... with 49 more variables: `SampleDate(end)...6` <dttm>,
+#> # ... with 49 more variables: `SampleDate(end)...6` <chr>,
 #> #   SampleSeason...7 <chr>, AggregatedSpace <chr>, AggregatedTime <chr>,
 #> #   DiffusiveCH4FluxMin <dbl>, DiffusiveCH4FluxMax <dbl>,
 #> #   DiffusiveCH4FluxMean <dbl>, DiffusiveCH4FluxStddev <dbl>,
@@ -128,7 +130,7 @@ head(papers_df)
 ``` r
 CH4mean_hist_fig <- ggplot(conc_df) +
   geom_histogram(aes(x = CH4mean)) +
-  scale_x_log10()
+  scale_x_log10() 
 
 print(CH4mean_hist_fig)
 ```
@@ -141,4 +143,58 @@ print(CH4mean_hist_fig)
 # ggsave(file.path(path_to_dropbox, "db_processingR", 
 #                  "Figures", "CH4_meanconc_hist.png"),
 #        CH4mean_hist_fig)
+
+CO2mean_hist_fig <- ggplot(conc_df) +
+  geom_histogram(aes(x = CO2mean)) +
+  scale_x_log10() +
+  theme(axis.title.y = element_blank())
+
+# print(CO2mean_hist_fig)
+
+N2Omean_hist_fig <- ggplot(conc_df) +
+  geom_histogram(aes(x = N2Omean)) +
+  scale_x_log10() +
+  theme(axis.title.y = element_blank())
+
+# print(N2Omean_hist_fig)
+
+CH4meanflux_hist_fig <- ggplot(flux_df) +
+  geom_histogram(aes(x = DiffusiveCH4FluxMean)) +
+  scale_x_log10() 
+
+# print(CH4meanflux_hist_fig)
+
+CO2meanflux_hist_fig <- ggplot(flux_df) +
+  geom_histogram(aes(x = CO2FluxMean)) +
+  scale_x_log10() +
+  theme(axis.title.y = element_blank())
+
+# print(CO2meanflux_hist_fig)
+
+N2Omeanflux_hist_fig <- ggplot(flux_df) +
+  geom_histogram(aes(x = N2OFluxMean)) +
+  scale_x_log10() +
+  theme(axis.title.y = element_blank())
+
+# print(N2Omeanflux_hist_fig)
+
+# png(file.path(path_to_dropbox, "db_processingR", 
+#                  "Figures", "Mean_gas_concflux.png"), 
+#     height = 7, width = 8, units = "in")
+
+grid.newpage()
+plots<-grid.draw(rbind(cbind(ggplotGrob(CH4mean_hist_fig),
+                             ggplotGrob(CO2mean_hist_fig), 
+                             ggplotGrob(N2Omean_hist_fig)),
+                       cbind(ggplotGrob(CH4meanflux_hist_fig),
+                             ggplotGrob(CO2meanflux_hist_fig),
+                             ggplotGrob(N2Omeanflux_hist_fig)),
+                       size = "first"))
+```
+
+![](man/figures/unnamed-chunk-4-2.png)<!-- -->
+
+``` r
+
+# dev.off()
 ```

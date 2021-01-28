@@ -75,6 +75,8 @@ getSaturation <- function(LakeKh, AtmP, gas){
 
 convert_conc_units <- function(concentrations, unit_convert_table){
   
+  library(dplyr)
+  
   goodunits <- unit_convert_table %>%
     filter(factor == 1) %>%
     group_by(variable, factor) %>%
@@ -86,10 +88,10 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   # These variables are only used for converting ppm and uatm to molar units
   concentrations_out <- concentrations %>%
     mutate(WaterTempUsed = ifelse(is.finite(WaterTempactual), 
-                                  WaterTempactual, 
-                                  ifelse(is.finite(WaterTempEst), 
-                                         WaterTempEst, 
-                                         NA)),
+                                  WaterTempactual,
+                                  ifelse(is.finite(WaterTempest), 
+                                         WaterTempest, 
+                                         NA)), 
            Pressure = estimate_pressure(Elevation_m))
   
   # Convert uatm and ppm to umol/L
