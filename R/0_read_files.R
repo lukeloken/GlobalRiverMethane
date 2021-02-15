@@ -2,8 +2,6 @@ library(tidyverse)
 library(readxl)
 library(here)
 library(patchwork)
-library(corrr)
-library(openxlsx)
 
 #Load custom functions
 source("R/convert_unit_functions.R")
@@ -12,10 +10,10 @@ source("R/convert_unit_functions.R")
 unit_convert_table <- readRDS("R/unit_convert_table.rds")
 
 #load GIS data
-# gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
-#                           "methdb_explore", "data", 
-#                           "methdb_gis.csv")) %>% 
-#   rename(Site_Nid =site_nid) 
+ gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
+                           "methdb_explore", "data", 
+                           "methdb_gis.csv")) %>% 
+   rename(Site_Nid =site_nid) 
 
 #load methdb papers table
 papers_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
@@ -32,17 +30,17 @@ sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "Sites", guess_max = 3500)  %>% 
   mutate(Site_Nid = as.character(Site_Nid)) %>%
   distinct()
-
-dup_sites <- table(sites_df$Site_Nid)
-dup_sites <- names(dup_sites[which(dup_sites>1)])
-
-site_df_duplicated <- filter(sites_df, Site_Nid %in% dup_sites) %>%
-  arrange(Site_Nid, Publication_Nid)
-
-write.csv(site_df_duplicated, file = file.path(path_to_dropbox, 
-                                               "db_processingR", 
-                                               "MethDB_sites_duplicated.csv"), 
-          row.names = FALSE)
+# 
+# dup_sites <- table(sites_df$Site_Nid)
+# dup_sites <- names(dup_sites[which(dup_sites>1)])
+# 
+# site_df_duplicated <- filter(sites_df, Site_Nid %in% dup_sites) %>%
+#   arrange(Site_Nid, Publication_Nid)
+# 
+# write.csv(site_df_duplicated, file = file.path(path_to_dropbox, 
+#                                                "db_processingR", 
+#                                                "MethDB_sites_duplicated.csv"), 
+#           row.names = FALSE)
           
 #rename columns
 names(sites_df) <- gsub(" ", "", names(sites_df))
@@ -133,7 +131,7 @@ conc_df <- convert_conc_units(concentrations, unit_convert_table)
 flux_df <- convert_flux_units(fluxes, unit_convert_table)
 
 save(conc_df, flux_df, 
-     sites_df, papers_df,
+     sites_df, papers_df, gis_df,
      file = file.path(path_to_dropbox, "db_processingR", 
                       "MethDB_tables_converted.rda"))
 
@@ -291,7 +289,7 @@ ggplot(flux_df) +
 #   
 # 
 # ##### SOme stats? another day...
-# 
+# library(corrr)
 # corr.ch4.everything <- concs.gis  %>% 
 #   select_if(is.numeric) %>% 
 #   select(CH4_umol_l, q_avg_m3s:human_footprint_up_09) %>% 
