@@ -117,8 +117,8 @@ save(conc_df, flux_df,
      file = file.path(path_to_dropbox, "db_processingR", 
                       "MethDB_tables_converted.rda"))
 
-load(file.path(path_to_dropbox, "db_processingR", 
-               "MethDB_tables_converted.rda"))
+# load(file.path(path_to_dropbox, "db_processingR", 
+#                "MethDB_tables_converted.rda"))
 
 #Quick plots of distributions
 ggplot(conc_df) +
