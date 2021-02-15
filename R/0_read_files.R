@@ -62,8 +62,8 @@ names(concentrations) <- gsub("/", "", names(concentrations))
 names(concentrations) <- gsub("Flux\\?", "FluxYesNo", names(concentrations))
 
 concentrations <- concentrations %>%
-  # mutate(across(c("SampleDatestart", "SampleDateend"), as.Date, .names = "{col}_v1")) #%>%
-  mutate(across(c("SampleDatestart", "SampleDateend"), convertToDate, .names = "{col}_v1"))
+  mutate(across(c("SampleDatestart", "SampleDateend"), 
+                convertToDate, .names = "{col}_v1"))
 
 concentrations$SampleDatestart_v1[which(is.na(concentrations$SampleDatestart_v1))] <- 
   as.Date(concentrations$SampleDatestart[which(is.na(concentrations$SampleDatestart_v1))], format = "%m/%d/%Y")
@@ -82,46 +82,27 @@ concentrations <- concentrations %>%
 fluxes <- read_excel(file.path(path_to_dropbox, MethDB_filename), 
                      sheet = "Fluxes", guess_max = 4000)
 
-names(fluxes)[grepl("Date", names(fluxes))] <- c(names(fluxes)[grepl("Date", names(fluxes))][1:2], "DateDelete1", "DateDelete2")
-names(fluxes)[grepl("Season", names(fluxes))] <- c(names(fluxes)[grepl("Season", names(fluxes))][1], "SeasonDelete1")
-
+#Change names of dates, seasons, and counts
+names(fluxes)[grepl("Date", names(fluxes))] <- c("SampleDatestart", "SampleDateend", "SampleDatestart_Bubble", "SampleDateend_Bubble")
+names(fluxes)[grepl("Season", names(fluxes))] <- c("Season", "Season_Bubble")
+                                                   
 names(fluxes)[grepl("Count", names(fluxes))] <- paste0("SampleCount_", c("Diffusive", "Bubble", "Total")) 
 
 names(fluxes) <- gsub("\\..*","",names(fluxes))
 
 #rename columns
 names(fluxes) <- gsub(" ", "", names(fluxes))
-names(fluxes) <- gsub("\\(", "", names(fluxes))
-names(fluxes) <- gsub("\\)", "", names(fluxes))
 
 
 fluxes <- fluxes %>%
-  select(-contains("Delete")) %>%
-  mutate(SampleDatestart = as.Date(SampleDatestart), 
-         SampleDateend   = convertToDate(SampleDateend))
+  mutate(across(contains("SampleDate"), ~as.Date(.x))) %>%
+  filter(!is.na(Site_Nid))
 
 data.frame(fluxes[which(is.na(fluxes$SampleDateend )),])
 data.frame(fluxes[which(is.na(fluxes$Site_Nid)),])
 
 
 summary(select(fluxes, contains("Date")))
-
-concentrations$SampleDatestart_v1[which(is.na(concentrations$SampleDatestart_v1))] <- 
-  as.Date(concentrations$SampleDatestart[which(is.na(concentrations$SampleDatestart_v1))], format = "%m/%d/%Y")
-concentrations$SampleDateend_v1[which(is.na(concentrations$SampleDateend_v1))] <- 
-  as.Date(concentrations$SampleDateend[which(is.na(concentrations$SampleDateend_v1))], format = "%m/%d/%Y")
-
-# data.frame(concentrations[which(is.na(concentrations$SampleDatestart_v1)),])
-
-concentrations <- concentrations %>%
-  select(-SampleDatestart, -SampleDateend) %>%
-  rename(SampleDatestart = SampleDatestart_v1,
-         SampleDateend = SampleDateend_v1) 
-
-
-
-
-
 
 
 
