@@ -61,6 +61,7 @@ names(concentrations) <- gsub("%", "percent", names(concentrations))
 names(concentrations) <- gsub("/", "", names(concentrations))
 names(concentrations) <- gsub("Flux\\?", "FluxYesNo", names(concentrations))
 
+#There are two types of dates in this dataset. some are excel format, others are m/d/y. 
 concentrations <- concentrations %>%
   mutate(across(c("SampleDatestart", "SampleDateend"), 
                 convertToDate, .names = "{col}_v1"))
