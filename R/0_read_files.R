@@ -1,7 +1,7 @@
 library(tidyverse)
 library(readxl)
-library(here)
-library(patchwork)
+library(lubridate)
+library(openxlsx) #this is needed for converToDate function
 
 #Load custom functions
 source("R/convert_unit_functions.R")
@@ -61,15 +61,17 @@ names(concentrations) <- gsub("%", "percent", names(concentrations))
 names(concentrations) <- gsub("/", "", names(concentrations))
 names(concentrations) <- gsub("Flux\\?", "FluxYesNo", names(concentrations))
 
+
+
 #There are two types of dates in this dataset. some are excel format, others are m/d/y. 
 concentrations <- concentrations %>%
   mutate(across(c("SampleDatestart", "SampleDateend"), 
                 convertToDate, .names = "{col}_v1"))
 
 concentrations$SampleDatestart_v1[which(is.na(concentrations$SampleDatestart_v1))] <- 
-  as.Date(concentrations$SampleDatestart[which(is.na(concentrations$SampleDatestart_v1))], format = "%m/%d/%Y")
+  as.Date(concentrations$SampleDatestart[which(is.na(concentrations$SampleDatestart_v1))], format = "%m-%d-%Y")
 concentrations$SampleDateend_v1[which(is.na(concentrations$SampleDateend_v1))] <- 
-  as.Date(concentrations$SampleDateend[which(is.na(concentrations$SampleDateend_v1))], format = "%m/%d/%Y")
+  as.Date(concentrations$SampleDateend[which(is.na(concentrations$SampleDateend_v1))], format = "%m-%d-%Y")
 
 concentrations <- concentrations %>%
   select(-SampleDatestart, -SampleDateend) %>%
