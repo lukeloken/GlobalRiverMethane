@@ -6,24 +6,23 @@ library(ggthemes)
 library(gridExtra)
 library(ggExtra)
 library(patchwork)
+library(plotbiomes)
 
 #Load custom ggplot functions
 source("R/ggplot2_utils.R")
 
-path_to_dropbox <-  "C:/Users/gero0008/Dropbox/SCIENCE/PostDoc/MethDB2.0"
 
 # load formatted and converted tables into your R environment
 load(file.path(path_to_dropbox, "db_processingR", 
                "MethDB_tables_converted.rda"))
 
-world_gis <- read_rds(file.path(path_to_dropbox, "db_processingR", "methdb_explore", "data", 
-               "basin_atlas_L12.rds"))
+#world_gis <- read_rds(file.path(path_to_dropbox, "db_processingR", "methdb_explore", "data", 
+ #              "basin_atlas_L12.rds"))
 
 flux_df <- flux_df %>% 
   mutate(Site_Nid =as.character(Site_Nid))
 
-conc_df <- conc_df %>% 
-  rename(SampleDatestart = `SampleDate(start)`)
+
 
 #summarise how mauny observations of concs and flux per site
 sites_conc_flux <-sites_df %>% 
@@ -50,9 +49,9 @@ sites_conc_flux %>%
 
 
   
-library(plotbiomes)
+
 #figure of MAT vs MAP with global distribution
-mat_map <- 
+  mat_map <- 
   ggplot()+
   #geom_hex(data= world_gis, bins=50,  aes(air_temp_sub_avg_celsius/10, precip_sub_mm))+
   geom_polygon(data = Whittaker_biomes, 
@@ -66,7 +65,13 @@ mat_map <-
 #  scale_fill_viridis_c()+
   theme_classic()+
   labs(x="Mean average temperature (C)", y= "Mean average precipitation (mm)")+
-  theme(legend.position = c(0.2, 0.75))
+  theme(legend.position = c(0.3, 1), legend.text=element_text(size=10), 
+        legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        legend.key = element_blank())+
+  guides(fill = guide_legend(title ="", ncol=1, keywidth=0.1,
+                             keyheight=0.1,
+                             default.unit="inch"))
 
 
 
@@ -159,12 +164,13 @@ data_plot_obs <- tibble(
   group_by(Continent) %>% 
   arrange(date) %>% 
   mutate(cum.obs = cumsum(obs)) %>% 
-  ungroup(date, Continent) 
+  ungroup(date, Continent) %>% 
+  drop_na(Continent)
 
 # and finally the plot for the time series
 plot_ts_concs <- ggplot(data_plot_obs)+
   geom_area(aes(x=date, y=cum.obs, fill=Continent), position = "stack")+
-  geom_vline(xintercept = as.Date("2015-01-01"), linetype= 2)+
+#  geom_vline(xintercept = as.Date("2015-01-01"), linetype= 2)+
   theme_classic()+
   labs(y="Cumulative observations")+
   theme(legend.position = c(0.2, 0.6))
@@ -191,6 +197,7 @@ world_gis %>%
     addPolygons() %>% 
     addMeasure() 
 
+### some randoms stuff to check the countries
 
 a <- sites_df %>% select(Site_Nid, Country) %>% 
   left_join(gis_df %>%  select(Site_Nid, countries_sub), 
@@ -204,7 +211,7 @@ a2 <- sites_df %>% select(Site_Nid, Country) %>%
 
   write_csv(a2,  file.path(path_to_dropbox, "sites_with_different_country.csv"))
   
-  
+  # and random stuff to check the coauthors
 coauthors <- sites_df %>% 
   group_by(Publication_Nid) %>% 
   summarise(n_sites=n()) %>% 
