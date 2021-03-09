@@ -5,7 +5,6 @@ library(maps)
 library(ggthemes)
 library(gridExtra)
 library(ggExtra)
-library(patchwork)
 library(plotbiomes)
 
 #Load custom ggplot functions
@@ -65,11 +64,11 @@ sites_conc_flux %>%
 #  scale_fill_viridis_c()+
   theme_classic()+
   labs(x="Mean average temperature (C)", y= "Mean average precipitation (mm)")+
-  theme(legend.position = c(0.3, 1), legend.text=element_text(size=10), 
+  theme(legend.position = c(0.3, 0.85), legend.text=element_text(size=10), 
         legend.background = element_blank(),
         legend.box.background = element_blank(),
         legend.key = element_blank())+
-  guides(fill = guide_legend(title ="", ncol=1, keywidth=0.1,
+  guides(fill = guide_legend(title ="", ncol=1, keywidth=0.2,
                              keyheight=0.1,
                              default.unit="inch"))
 
@@ -83,18 +82,18 @@ map_world <-
   geom_map(data=map_sc, map=map_sc,
            aes(x=long, y=lat, group=group, map_id=region),
            fill="gray90", colour="gray40", size=0.5)+
-  geom_point(data=sites_conc_flux, 
+  geom_point(data=sites_conc_flux %>% filter(type != "none"), 
              aes(x=Longitude, y=Latitude, color = type), 
              size=2, alpha=.5)+
   scale_y_continuous(limits=c(-52,80))+
-  scale_color_manual(values = c("#3b4994", "#5ac8c8", "#b364ac","gold"))+
+  scale_color_manual(values = c("#3b4994", "#5ac8c8", "#b364ac"))+
   coord_sf(crs = 4087)+
   labs(color= "")+
   theme_map()+
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
-        legend.position="bottom",
+        legend.position="none",
         legend.text = element_text(size=13),
         legend.justification = "center" )
 
@@ -134,7 +133,8 @@ hists_n <-
   scale_fill_manual(values = c("#3b4994", "#b364ac", "#5ac8c8"), name="")+
   theme_classic()+
   labs( x= "number of observations", y= "number of sites")+
-  theme(legend.position=c(0.8, 0.8))
+  theme(legend.position=c(0.34, 1.4),
+        legend.text = element_text(size=14))
 
 
 # Plot for the time series of observations. 
@@ -165,15 +165,25 @@ data_plot_obs <- tibble(
   arrange(date) %>% 
   mutate(cum.obs = cumsum(obs)) %>% 
   ungroup(date, Continent) %>% 
-  drop_na(Continent)
+  drop_na(Continent) %>% 
+  mutate( Continent =  fct_relevel(Continent, "Oceania", "Africa", "Asia", "Europe", "North America", "South America") )
 
 # and finally the plot for the time series
 plot_ts_concs <- ggplot(data_plot_obs)+
   geom_area(aes(x=date, y=cum.obs, fill=Continent), position = "stack")+
 #  geom_vline(xintercept = as.Date("2015-01-01"), linetype= 2)+
+  scale_fill_manual(values= c("#b88c3f", #colors from http://medialab.github.io/iwanthue/
+                              "#ba5fb2",
+                              "#75ab3d",
+                              "#6a7fce",
+                              "#cc5658",
+                              "#54a77b"))+
   theme_classic()+
   labs(y="Cumulative observations")+
-  theme(legend.position = c(0.2, 0.6))
+  theme(legend.position = c(0.2, 0.8))+
+  guides(fill = guide_legend( ncol=1, keywidth=0.2,
+                             keyheight=0.1,
+                             default.unit="inch"))
 
 
 #put them together in a panel
@@ -181,7 +191,7 @@ together <- grid.arrange(world_densities, arrangeGrob(hists_n, plot_ts_concs, ma
                          nrow = 2, heights = c(2,1))
 
 ggsave(together,  filename =  file.path(path_to_dropbox, "data ms files", "figures", "map_sites.png"),
-       width = 14, height = 9)
+       width = 14, height = 9, dpi = 400)
 
 
 
