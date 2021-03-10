@@ -9,7 +9,10 @@ path_to_dropbox <- "C:/Users/lloken/OneDrive - DOI/GlobalRiverMethane" #Luke's U
 
 # MethDB_filename <- "MethDB_EHS_18Jan21.xlsx"
 # MethDB_filename <- "MethDB_EHS_25Jan21.xlsx"
-MethDB_filename <- "MethDB_EHS_5Feb21.xlsx"
+# MethDB_filename <- "MethDB_EHS_5Feb21.xlsx"
+# MethDB_filename <- "MethDB_1Mar2020.xlsx"
+MethDB_filename <- "MethDB_1Mar2021.xlsx"
+
 
 
 #Non set up below
