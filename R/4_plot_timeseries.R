@@ -91,3 +91,29 @@ print(CH4conc_ts_bysite_v2)
 ggsave(file.path(path_to_dropbox, "Figures", "Timeseries", "CH4conc_20plus_sites_annual.png"), 
        CH4conc_ts_bysite_v2, 
        height = 10, width = 18)
+
+
+my_breaks = 10^seq(-6, 9)
+CH4conc_ts_v3 <- ggplot(conc_ts, aes(x = Date2020, y = as.factor(Latitude), col = CH4mean)) +
+  geom_point() +
+  # geom_vpline() + 
+  # scale_y_log10() + 
+  # facet_wrap(~Site_Nid, scales = "free_y", 
+             # labeller = labeller(Site_Nid = site_labels)) +
+  theme_bw() +
+  scale_color_distiller(palette = "YlOrBr", breaks = my_breaks, trans = "log", direction = 1) + 
+  theme(axis.title.x = element_blank()) +
+  labs(y = "Latitude")  + 
+  # guides(color = guide_legend(nrow = 1)) +
+  # theme(legend.position = c(0.95, -0.03),
+  #       legend.justification = c(1, 0), 
+  #       legend.title.align = 0.5, 
+  #       legend.box = "horizontal") +
+  # scale_x_date(date_labels = "%Y", date_breaks = "1 years") 
+  scale_x_date(date_labels = "%b-%d")
+
+print(CH4conc_ts_v3)
+
+ggsave(file.path(path_to_dropbox, "Figures", "Timeseries", "CH4conc_20plus_sites_v3.png"), 
+       CH4conc_ts_v3, 
+       height = 8, width = 6)
