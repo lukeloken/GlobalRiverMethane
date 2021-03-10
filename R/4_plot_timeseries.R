@@ -91,3 +91,34 @@ print(CH4conc_ts_bysite_v2)
 ggsave(file.path(path_to_dropbox, "Figures", "Timeseries", "CH4conc_20plus_sites_annual.png"), 
        CH4conc_ts_bysite_v2, 
        height = 10, width = 18)
+
+
+##### By Q
+CH4conc_Q_bysite <- conc_ts %>% 
+  filter(Q> 0) %>% 
+  ggplot( aes(x = Q, y = CH4mean, col = Season_date)) +
+  geom_point() +
+  scale_y_log10() + 
+  facet_wrap(~Site_Nid, scales = "free", 
+             labeller = labeller(Site_Nid = site_labels)) +
+  theme_bw() +
+  scale_color_manual(values = season_colors) + 
+  theme(strip.background = element_blank(), 
+        strip.text = element_text(size = 6), 
+        axis.text = element_text(size = 6), 
+        plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_blank()) +
+  labs(y = expression(paste(CH[4], " (", mu, "M)"))) +
+  ggtitle(expression(paste(CH[4], " concentrations at 20+ timepoints (title = latitude)"))) +
+  guides(color = guide_legend(nrow = 1)) +
+  theme(legend.position = c(0.95, -0.03),
+        legend.justification = c(1, 0), 
+        legend.title.align = 0.5, 
+        legend.box = "horizontal")
+
+print(CH4conc_Q_bysite)
+
+ggsave(file.path(path_to_dropbox, "Figures", "Timeseries", "CH4conc_Q.png"), 
+       CH4conc_Q_bysite, 
+       height = 10, width = 18)
+
