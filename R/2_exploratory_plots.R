@@ -52,6 +52,7 @@ ggplot(flux_df) +
 
 source("R/convert_unit_functions.R")
 
+#calculate %sat for all values
 conc_df <- conc_df %>% 
   mutate(temp.any = ifelse(is.na(WaterTempactual) == T, WaterTempest, WaterTempactual),
            pressure = estimate_pressure(Elevation_m),
@@ -75,9 +76,13 @@ concs_gis <-  left_join(conc_df, gis_df, by="Site_Nid")
 
 #quick check that the unit conversion didn't fuck things up significantly, but needs to be double checked
 ggplot(concs_gis)+
-  geom_boxplot(aes(x=orig_CH4unit, y=CH4mean))+
+  geom_boxplot(aes(x=orig_N2Ounit, y=N2Omean))+
   scale_y_log10(breaks=c(.01,.1,1, 10, 100, 1000, 10000),labels=c(.01,.1,1, 10, 100, 1000, 10000))
 
+conc_df %>% 
+  filter(orig_N2Ounit == "mgN/L") %>% 
+  select(Publication_Nid, Site_Nid, SiteName, N2Omean, CH4mean) %>% 
+  print(n=50)
 
 # some quick plots on broad controls
 ggplot(gis_df)+
@@ -159,7 +164,7 @@ conc_df  %>%
   theme_classic()
 
 
-#### Example of within site variability= temperature
+#### Example of within site variability= discharge
 conc_df  %>%
   add_count(Site_Nid) %>%
   filter(n> 30) %>%
@@ -170,6 +175,23 @@ conc_df  %>%
   theme_classic()
 
 #ggsave(file="outputs/plots/temp ch4.png", width = 15, height = 15)
+
+
+conc_df %>% 
+  ggplot()+
+  geom_point(aes(CH4mean, N2Omean), alpha=.5)+
+  scale_x_log10()+
+  scale_y_log10()+
+  theme_classic()
+
+conc_df %>% 
+  ggplot()+
+  geom_point(aes(CH4mean, CO2mean), alpha=.5)+
+  scale_x_log10()+
+  scale_y_log10()+
+  theme_classic()
+
+
 
 
 ##### SOme stats? another day...
