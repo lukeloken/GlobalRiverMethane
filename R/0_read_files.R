@@ -109,6 +109,20 @@ summary(select(fluxes, contains("Date")))
 
 
 
+concs_without_mean_ch4 <- concentrations %>% 
+  mutate(CH4mean_numeric= as.numeric(CH4mean)) %>% 
+  filter(is.na(CH4mean_numeric) == TRUE) %>% 
+  select(Publication_Nid, Site_Nid, CH4min:CH4unit) 
+
+write.csv(concs_without_mean_ch4, file = file.path(path_to_dropbox,
+                                               "MethDB_concs_without_ch4_mean.csv"),
+          row.names = FALSE)
+
+concs_without_mean_ch4 %>% 
+  count(CH4unit) %>% 
+  print(n=50)
+
+
 #Convert concentration and fluxes to uM and mmol m-2 d-1
 
 conc_df <- convert_conc_units(concentrations, unit_convert_table)
