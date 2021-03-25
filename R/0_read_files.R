@@ -14,7 +14,7 @@ unit_convert_table <- readRDS("R/unit_convert_table.rds")
  gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
                            "methdb_explore", "data", 
                            "methdb_gis.csv")) %>% 
-   rename(Site_Nid =site_nid) 
+   mutate(Site_Nid =as.character(site_nid)) 
 
 #load methdb papers table
 papers_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
@@ -28,9 +28,10 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 
 #load methdb site table
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
-                    sheet = "Sites", guess_max = 3500)  %>% 
-  mutate(Site_Nid = as.character(Site_Nid)) %>%
-  distinct()
+                    sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
+  mutate(Site_Nid = as.character(Site_Nid)) %>% 
+  left_join(gis_df %>% select(Site_Nid, lat_new = lat, lon_new = lon, elevation_m_new = z, slope),
+            by = "Site_Nid")
 # 
 # dup_sites <- table(sites_df$Site_Nid)
 # dup_sites <- names(dup_sites[which(dup_sites>1)])
@@ -49,7 +50,7 @@ names(sites_df) <- gsub("\\(m\\)", "_m", names(sites_df))
 
 #load methdb concentration table and bind with elevation
 concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename), 
-                             sheet = "Concentrations", guess_max = 14600) %>% 
+                             sheet = "MethDB_2_conc", guess_max = 14600) %>% 
   mutate(Site_Nid = as.character(Site_Nid)) %>%
   left_join(select(sites_df, Site_Nid, Elevation_m)) %>%
   filter(!is.na(Publication_Nid) & !is.na(Site_Nid))
@@ -82,7 +83,7 @@ concentrations <- concentrations %>%
 
 #load methdb fluxes
 fluxes <- read_excel(file.path(path_to_dropbox, MethDB_filename), 
-                     sheet = "Fluxes", guess_max = 4000)
+                     sheet = "MethDB_2_flux", guess_max = 4000)
 
 #Change names of dates, seasons, and counts
 names(fluxes)[grepl("Date", names(fluxes))] <- c("SampleDatestart", "SampleDateend", "SampleDatestart_Bubble", "SampleDateend_Bubble")
