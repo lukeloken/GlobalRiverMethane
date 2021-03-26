@@ -87,10 +87,10 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   # Calculate best temp available and elevation-based pressure. 
   # These variables are only used for converting ppm and uatm to molar units
   concentrations_out <- concentrations %>%
-    mutate(WaterTempUsed = ifelse(is.finite(WaterTempactual), 
-                                  WaterTempactual,
-                                  ifelse(is.finite(WaterTempest), 
-                                         WaterTempest, 
+    mutate(WaterTempUsed = ifelse(is.finite(WaterTemp_actual), 
+                                  WaterTemp_actual,
+                                  ifelse(is.finite(WaterTemp_est), 
+                                         WaterTemp_est, 
                                          NA)), 
            Pressure = estimate_pressure(Elevation_m))
   

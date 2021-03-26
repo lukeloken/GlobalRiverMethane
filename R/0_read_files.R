@@ -50,10 +50,11 @@ names(sites_df) <- gsub("\\(m\\)", "_m", names(sites_df))
 
 #load methdb concentration table and bind with elevation
 concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename), 
-                             sheet = "MethDB_2_conc", guess_max = 14600) %>% 
+                             sheet = "MethDB_2_conc", guess_max = 20000) %>% 
   mutate(Site_Nid = as.character(Site_Nid)) %>%
   left_join(select(sites_df, Site_Nid, Elevation_m)) %>%
   filter(!is.na(Publication_Nid) & !is.na(Site_Nid))
+
 
 #rename columns
 names(concentrations) <- gsub(" ", "", names(concentrations))
@@ -65,20 +66,20 @@ names(concentrations) <- gsub("Flux\\?", "FluxYesNo", names(concentrations))
 
 #There are two types of dates in this dataset. some are excel format, others are m/d/y. 
 concentrations <- concentrations %>%
-  mutate(across(c("SampleDatestart", "SampleDateend"), 
+  mutate(across(c("Date_start", "Date_end"), 
                 convertToDate, .names = "{col}_v1"))
 
-concentrations$SampleDatestart_v1[which(is.na(concentrations$SampleDatestart_v1))] <- 
-  as.Date(concentrations$SampleDatestart[which(is.na(concentrations$SampleDatestart_v1))], format = "%m/%d/%Y")
-concentrations$SampleDateend_v1[which(is.na(concentrations$SampleDateend_v1))] <- 
-  as.Date(concentrations$SampleDateend[which(is.na(concentrations$SampleDateend_v1))], format = "%m/%d/%Y")
+concentrations$Date_start_v1[which(is.na(concentrations$Date_start_v1))] <- 
+  as.Date(concentrations$Date_start[which(is.na(concentrations$Date_start_v1))], format = "%m/%d/%Y")
+concentrations$Date_end_v1[which(is.na(concentrations$Date_end_v1))] <- 
+  as.Date(concentrations$Date_end[which(is.na(concentrations$Date_end_v1))], format = "%m/%d/%Y")
 
 concentrations <- concentrations %>%
-  select(-SampleDatestart, -SampleDateend) %>%
-  rename(SampleDatestart = SampleDatestart_v1,
-         SampleDateend = SampleDateend_v1) 
+  select(-Date_start, -Date_end) %>%
+  rename(Date_start = Date_start_v1,
+         Date_end = Date_end_v1) 
 
-# data.frame(concentrations[which(is.na(concentrations$SampleDatestart)),])
+# data.frame(concentrations[which(is.na(concentrations$Date_start)),])
 
 
 #load methdb fluxes
@@ -86,7 +87,7 @@ fluxes <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                      sheet = "MethDB_2_flux", guess_max = 4000)
 
 #Change names of dates, seasons, and counts
-names(fluxes)[grepl("Date", names(fluxes))] <- c("SampleDatestart", "SampleDateend", "SampleDatestart_Bubble", "SampleDateend_Bubble")
+names(fluxes)[grepl("Date", names(fluxes))] <- c("Date_start", "Date_end", "Date_start_Bubble", "Date_end_Bubble")
 names(fluxes)[grepl("Season", names(fluxes))] <- c("Season", "Season_Bubble")
                                                    
 names(fluxes)[grepl("Count", names(fluxes))] <- paste0("SampleCount_", c("Diffusive", "Bubble", "Total")) 
@@ -101,7 +102,7 @@ fluxes <- fluxes %>%
   mutate(across(contains("SampleDate"), ~as.Date(.x))) %>%
   filter(!is.na(Site_Nid))
 
-data.frame(fluxes[which(is.na(fluxes$SampleDateend )),])
+data.frame(fluxes[which(is.na(fluxes$Date_end )),])
 data.frame(fluxes[which(is.na(fluxes$Site_Nid)),])
 
 
@@ -109,18 +110,18 @@ summary(select(fluxes, contains("Date")))
 
 
 
-concs_without_mean_ch4 <- concentrations %>% 
-  mutate(CH4mean_numeric= as.numeric(CH4mean)) %>% 
-  filter(is.na(CH4mean_numeric) == TRUE) %>% 
-  select(Publication_Nid, Site_Nid, CH4min:CH4unit) 
+#concs_without_mean_ch4 <- concentrations %>% 
+#  mutate(CH4mean_numeric= as.numeric(CH4mean)) %>% 
+#  filter(is.na(CH4mean_numeric) == TRUE) %>% 
+#  select(Publication_Nid, Site_Nid, CH4min:CH4unit) 
 
-write.csv(concs_without_mean_ch4, file = file.path(path_to_dropbox,
-                                               "MethDB_concs_without_ch4_mean.csv"),
-          row.names = FALSE)
+#write.csv(concs_without_mean_ch4, file = file.path(path_to_dropbox,
+#                                              "MethDB_concs_without_ch4_mean.csv"),
+#        row.names = FALSE)
 
-concs_without_mean_ch4 %>% 
-  count(CH4unit) %>% 
-  print(n=50)
+#concs_without_mean_ch4 %>% 
+#  count(CH4unit) %>% 
+#  print(n=50)
 
 
 #Convert concentration and fluxes to uM and mmol m-2 d-1
