@@ -49,12 +49,13 @@ names(sites_df) <- gsub(" ", "", names(sites_df))
 names(sites_df) <- gsub("\\(m\\)", "_m", names(sites_df))
 
 #load methdb concentration table and bind with elevation
-concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename), 
-                             sheet = "MethDB_2_conc", guess_max = 14600) %>% 
+concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename),
+                             sheet = "MethDB_2_conc", guess_max = 20000) %>% 
   mutate(Site_Nid = as.character(Site_Nid),
          across(contains("Date_"), ~as.Date(.x))) %>%
   left_join(select(sites_df, Site_Nid, Elevation_m)) %>%
   filter(!is.na(Publication_Nid) & !is.na(Site_Nid))
+
 
 #rename columns
 names(concentrations) <- gsub(" ", "", names(concentrations))
@@ -85,7 +86,7 @@ data.frame(concentrations[which(is.na(concentrations$Site_Nid)),])
 #   rename(SampleDatestart = SampleDatestart_v1,
 #          SampleDateend = SampleDateend_v1) 
 
-# data.frame(concentrations[which(is.na(concentrations$SampleDatestart)),])
+
 
 
 #load methdb fluxes
@@ -93,7 +94,7 @@ fluxes <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                      sheet = "MethDB_2_flux", guess_max = 4000)
 
 #Change names of dates, seasons, and counts
-names(fluxes)[grepl("Date", names(fluxes))] <- c("SampleDatestart", "SampleDateend", "SampleDatestart_Bubble", "SampleDateend_Bubble")
+names(fluxes)[grepl("Date", names(fluxes))] <- c("Date_start", "Date_end", "Date_start_Bubble", "Date_end_Bubble")
 names(fluxes)[grepl("Season", names(fluxes))] <- c("Season", "Season_Bubble")
                                                    
 names(fluxes)[grepl("Count", names(fluxes))] <- paste0("SampleCount_", c("Diffusive", "Bubble", "Total")) 
@@ -105,11 +106,11 @@ names(fluxes) <- gsub(" ", "", names(fluxes))
 
 
 fluxes <- fluxes %>%
-  mutate(across(contains("SampleDate"), ~as.Date(.x))) %>%
+  mutate(across(contains("Date"), ~as.Date(.x))) %>%
   filter(!is.na(Site_Nid))
 
-data.frame(fluxes[which(is.na(fluxes$SampleDateend )),])
-data.frame(fluxes[which(is.na(fluxes$SampleDatestart )),])
+data.frame(fluxes[which(is.na(fluxes$Date_start )),])
+data.frame(fluxes[which(is.na(fluxes$Date_end )),])
 data.frame(fluxes[which(is.na(fluxes$Site_Nid)),])
 
 
@@ -120,13 +121,14 @@ concs_without_mean_ch4 <- concentrations %>%
   filter(is.na(CH4mean_numeric) == TRUE) %>% 
   select(Publication_Nid, Site_Nid, CH4min:CH4unit) 
 
-write.csv(concs_without_mean_ch4, file = file.path(path_to_dropbox,
-                                               "MethDB_concs_without_ch4_mean.csv"),
-          row.names = FALSE)
 
-concs_without_mean_ch4 %>% 
-  count(CH4unit) %>% 
-  print(n=50)
+#write.csv(concs_without_mean_ch4, file = file.path(path_to_dropbox,
+#                                              "MethDB_concs_without_ch4_mean.csv"),
+#        row.names = FALSE)
+
+#concs_without_mean_ch4 %>% 
+#  count(CH4unit) %>% 
+#  print(n=50)
 
 
 #Convert concentration and fluxes to uM and mmol m-2 d-1
