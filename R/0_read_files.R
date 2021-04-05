@@ -51,7 +51,8 @@ names(sites_df) <- gsub("\\(m\\)", "_m", names(sites_df))
 #load methdb concentration table and bind with elevation
 concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename), 
                              sheet = "MethDB_2_conc", guess_max = 14600) %>% 
-  mutate(Site_Nid = as.character(Site_Nid)) %>%
+  mutate(Site_Nid = as.character(Site_Nid),
+         across(contains("Date_"), ~as.Date(.x))) %>%
   left_join(select(sites_df, Site_Nid, Elevation_m)) %>%
   filter(!is.na(Publication_Nid) & !is.na(Site_Nid))
 
@@ -62,21 +63,27 @@ names(concentrations) <- gsub("\\)", "", names(concentrations))
 names(concentrations) <- gsub("%", "percent", names(concentrations))
 names(concentrations) <- gsub("/", "", names(concentrations))
 names(concentrations) <- gsub("Flux\\?", "FluxYesNo", names(concentrations))
+names(concentrations) <- gsub("WaterTemp_", "WaterTemp", names(concentrations))
+
+
+data.frame(concentrations[which(is.na(concentrations$Date_start )),])
+data.frame(concentrations[which(is.na(concentrations$Date_end )),])
+data.frame(concentrations[which(is.na(concentrations$Site_Nid)),])
 
 #There are two types of dates in this dataset. some are excel format, others are m/d/y. 
-concentrations <- concentrations %>%
-  mutate(across(c("SampleDatestart", "SampleDateend"), 
-                convertToDate, .names = "{col}_v1"))
-
-concentrations$SampleDatestart_v1[which(is.na(concentrations$SampleDatestart_v1))] <- 
-  as.Date(concentrations$SampleDatestart[which(is.na(concentrations$SampleDatestart_v1))], format = "%m/%d/%Y")
-concentrations$SampleDateend_v1[which(is.na(concentrations$SampleDateend_v1))] <- 
-  as.Date(concentrations$SampleDateend[which(is.na(concentrations$SampleDateend_v1))], format = "%m/%d/%Y")
-
-concentrations <- concentrations %>%
-  select(-SampleDatestart, -SampleDateend) %>%
-  rename(SampleDatestart = SampleDatestart_v1,
-         SampleDateend = SampleDateend_v1) 
+# concentrations <- concentrations %>%
+#   mutate(across(c("SampleDatestart", "SampleDateend"), 
+#                 convertToDate, .names = "{col}_v1"))
+# 
+# concentrations$SampleDatestart_v1[which(is.na(concentrations$SampleDatestart_v1))] <- 
+#   as.Date(concentrations$SampleDatestart[which(is.na(concentrations$SampleDatestart_v1))], format = "%m/%d/%Y")
+# concentrations$SampleDateend_v1[which(is.na(concentrations$SampleDateend_v1))] <- 
+#   as.Date(concentrations$SampleDateend[which(is.na(concentrations$SampleDateend_v1))], format = "%m/%d/%Y")
+# 
+# concentrations <- concentrations %>%
+#   select(-SampleDatestart, -SampleDateend) %>%
+#   rename(SampleDatestart = SampleDatestart_v1,
+#          SampleDateend = SampleDateend_v1) 
 
 # data.frame(concentrations[which(is.na(concentrations$SampleDatestart)),])
 
@@ -102,12 +109,11 @@ fluxes <- fluxes %>%
   filter(!is.na(Site_Nid))
 
 data.frame(fluxes[which(is.na(fluxes$SampleDateend )),])
+data.frame(fluxes[which(is.na(fluxes$SampleDatestart )),])
 data.frame(fluxes[which(is.na(fluxes$Site_Nid)),])
 
 
 summary(select(fluxes, contains("Date")))
-
-
 
 concs_without_mean_ch4 <- concentrations %>% 
   mutate(CH4mean_numeric= as.numeric(CH4mean)) %>% 
@@ -135,6 +141,26 @@ save(conc_df, flux_df,
 
 # load(file.path(path_to_dropbox, "db_processingR", 
 #                "MethDB_tables_converted.rda"))
+
+ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
+  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw()
+
+ggplot(flux_df, aes(x = DiffusiveFluxunit, y = DiffusiveCH4FluxMean)) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
+  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90))
+
+ggplot(conc_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
+  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw()
+
 
 #Quick plots of distributions
 ggplot(conc_df) +
