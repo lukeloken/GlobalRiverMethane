@@ -64,7 +64,7 @@ names(concentrations) <- gsub("\\)", "", names(concentrations))
 names(concentrations) <- gsub("%", "percent", names(concentrations))
 names(concentrations) <- gsub("/", "", names(concentrations))
 names(concentrations) <- gsub("Flux\\?", "FluxYesNo", names(concentrations))
-names(concentrations) <- gsub("WaterTemp_", "WaterTemp", names(concentrations))
+# names(concentrations) <- gsub("WaterTemp_", "WaterTemp", names(concentrations))
 
 
 data.frame(concentrations[which(is.na(concentrations$Date_start )),])
