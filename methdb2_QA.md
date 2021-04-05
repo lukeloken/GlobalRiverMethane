@@ -28,6 +28,12 @@ lines limiting the top and bottom 10% obrservations
 
 Ok let’s find which sites are the bottom 10%
 
+<details>
+<summary>
+Open
+</summary>
+<p>
+
 ```
 #> # A tibble: 458 x 4
 #>     Site_Nid Publication_Nid  CH4mean unit    
@@ -492,7 +498,14 @@ Ok let’s find which sites are the bottom 10%
 #> 458 1143                2243 0.0137   ppm CH4
 ```
 
+</p>
+</details>
 And in which papers are those sites:
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 56 x 3
@@ -556,7 +569,16 @@ And in which papers are those sites:
 #> 56           12442 0.0137  uatm CH4
 ```
 
+</p>
+</details>
+
 Now let’s find which sites are the top 10%
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 567 x 4
@@ -1131,7 +1153,16 @@ Now let’s find which sites are the top 10%
 #> 567 2518                2310    1.85 ugCH4/L
 ```
 
+</p>
+</details>
+
 And in which papers, sorted from high to low:
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 104 x 3
@@ -1243,6 +1274,9 @@ And in which papers, sorted from high to low:
 #> 104            2237    1.86 umol/L
 ```
 
+</p>
+</details>
+
 ### Extreme carbon dioxide values
 
 For the other gasses, given that the number of sites is huge, we relax
@@ -1254,6 +1288,11 @@ lines limiting the top and bottom 5% observations
 ![](man/figures/unnamed-chunk-9-1.png)<!-- -->
 
 Ok let’s find which sites are the bottom 5%
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 277 x 4
@@ -1538,7 +1577,16 @@ Ok let’s find which sites are the bottom 5%
 #> 277 1178                2243 24.1    ppm CO2
 ```
 
+</p>
+</details>
+
 And in which papers are those sites:
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 47 x 3
@@ -1593,7 +1641,16 @@ And in which papers are those sites:
 #> 47            7197   24    umol/L
 ```
 
+</p>
+</details>
+
 Now let’s find which sites are the top 5%
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 261 x 4
@@ -1862,7 +1919,16 @@ Now let’s find which sites are the top 5%
 #> 261 8187                7256    398. ppm CO2
 ```
 
+</p>
+</details>
+
 And in which papers:
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 56 x 3
@@ -1926,6 +1992,9 @@ And in which papers:
 #> 56            7259    404. uatm CO2
 ```
 
+</p>
+</details>
+
 ### Extreme nitrous oxide values
 
 Let’s plot the distribution of mean N2O concentration. With vertical
@@ -1934,6 +2003,12 @@ lines limiting the top and bottom 5% observations
 ![](man/figures/unnamed-chunk-14-1.png)<!-- -->
 
 Ok let’s find which sites are the bottom 5%
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 148 x 4
@@ -2089,7 +2164,16 @@ Ok let’s find which sites are the bottom 5%
 #> 148 2289                2297 0.00613    umol/L
 ```
 
+</p>
+</details>
+
 And in which papers are those sites:
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 23 x 3
@@ -2120,7 +2204,16 @@ And in which papers are those sites:
 #> 23            2303 0.00612   umol/L
 ```
 
+</p>
+</details>
+
 Now let’s find which sites are the top 10%
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 111 x 4
@@ -2239,7 +2332,16 @@ Now let’s find which sites are the top 10%
 #> 111 11746              11744   0.114 umol/L
 ```
 
+</p>
+</details>
+
 And in which papers:
+
+<details>
+<summary>
+Open
+</summary>
+<p>
 
 ```
 #> # A tibble: 27 x 3
@@ -2273,3 +2375,6 @@ And in which papers:
 #> 26           12840   0.128 umol/L 
 #> 27            2269   0.121 ugN/L
 ```
+
+</p>
+</details>

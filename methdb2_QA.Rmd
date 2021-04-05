@@ -1,8 +1,8 @@
 ---
 title: "methDB2_QA"
 output: 
-  html_document: 
-    highlight: tango
+  md_document:
+    variant: gfm
 ---
 
 ```{r, echo = FALSE}
@@ -69,6 +69,9 @@ print(CH4mean_hist_fig)
 ```
 
 Ok let's find which sites are the bottom 10%
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 100px;"'}
 
@@ -83,8 +86,12 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 And in which papers are those sites:
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 100px;"'}
 
@@ -98,8 +105,13 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 Now let's find which sites are the top 10%
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -114,8 +126,13 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 And in which papers, sorted from high to low:
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -129,6 +146,8 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 ### Extreme carbon dioxide values
 For the other gasses, given that the number of sites is huge, we relax the limit to top/bottom 5%.
@@ -153,6 +172,8 @@ print(CO2mean_hist_fig)
 ```
 
 Ok let's find which sites are the bottom 5%
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -167,8 +188,13 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 And in which papers are those sites:
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -182,8 +208,13 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 Now let's find which sites are the top 5%
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -198,8 +229,13 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 And in which papers:
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -213,6 +249,8 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 ### Extreme nitrous oxide values
 
@@ -233,6 +271,9 @@ print(N2Omean_hist_fig)
 ```
 
 Ok let's find which sites are the bottom 5%
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -247,8 +288,13 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 And in which papers are those sites:
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -262,8 +308,13 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 Now let's find which sites are the top 10%
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -278,8 +329,13 @@ conc_df %>%
 
 
 ```
+</p>
+</details>
 
 And in which papers:
+
+<details><summary>Open</summary>
+<p>
  
 ```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
 
@@ -293,6 +349,7 @@ conc_df %>%
 
 
 ```
-
+</p>
+</details>
 
 
