@@ -84,6 +84,22 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   
   allunits <- unique(unit_convert_table$unit[!is.na(unit_convert_table$unit)])
   
+  dataunits <- concentrations %>%
+    select(contains("unit")) 
+  
+  dataunits_vector <- unique(unlist(sapply(dataunits, unique), use.names = FALSE))
+  
+  missing_units <- setdiff(unique(dataunits_vector), allunits)
+  missing_units <- missing_units[!grepl("ppm", missing_units)]
+  missing_units <- missing_units[!grepl("uatm", missing_units)]
+  missing_units <- missing_units[!grepl("ppb", missing_units)]
+  missing_units <- missing_units[!is.na(missing_units)]
+  
+  if( length(missing_units > 0)) {
+    stop("One of the following units is missing in unit conversion table: ", 
+            paste(missing_units, collapse = ", "))
+  }
+    
   # Calculate best temp available and elevation-based pressure. 
   # These variables are only used for converting ppm and uatm to molar units
   concentrations_out <- concentrations %>%
@@ -313,6 +329,20 @@ convert_flux_units <- function(fluxes, unit_convert_table){
     summarize(unit = unit[1], .groups = "drop")
   
   allunits <- unique(unit_convert_table$unit[!is.na(unit_convert_table$unit)])
+  
+  dataunits <- fluxes %>%
+    select(contains("unit")) 
+  
+  dataunits_vector <- unique(unlist(sapply(dataunits, unique), use.names = FALSE))
+  
+  missing_units <- setdiff(unique(dataunits_vector), allunits)
+
+  
+  if( length(missing_units[which(!is.na(missing_units))] > 0)) {
+    stop("One of the following units is missing in unit conversion table: ", 
+         paste(missing_units, collapse = ", "))
+  }
+  
   
   #CH4 diffusive flux
   fluxes_out <- fluxes %>%
