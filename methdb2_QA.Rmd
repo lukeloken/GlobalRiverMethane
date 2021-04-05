@@ -1,0 +1,298 @@
+---
+title: "methDB2_QA"
+output: 
+  html_document: 
+    highlight: tango
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.width = 7,
+                      fig.height = 7,
+                      collapse = TRUE,
+                      comment = "#>",
+                      fig.path = "man/figures/"
+)
+
+```
+
+
+# Basic quality check of MethDB2
+Document for a basic quality check of the raw data in the MethDB2, checking mostly the extreme values for now. Also showing the original unit of the data to double check if it is a conversion problem.
+
+
+
+```{r, echo= FALSE}
+#Replace with your own dropbox folder location
+path_to_dropbox <- "C:/Users/emsta/Dropbox/MethDB2.0" #Emily's folder
+path_to_dropbox <- "C:/Users/lloken/OneDrive - DOI/GlobalRiverMethane" #Luke's USGS computer
+path_to_dropbox <-  "C:/Users/gero0008/Dropbox/SCIENCE/PostDoc/MethDB2.0" #gerards pc
+
+```
+Now we can load the files with data, both the concentrations and flux tables have been converted to a common unit (uM and mmol m-2 d-1) for all variables (CH4, CO2, N2O, nutrients)
+
+```{r}
+
+library(tidyverse)
+
+#Load custom ggplot functions
+source("R/ggplot2_utils.R")
+
+# load formatted and converted tables into your R environment
+load(file.path(path_to_dropbox, "db_processingR", 
+               "MethDB_tables_converted.rda"))
+
+
+```
+
+### Extreme methane values
+
+Let's plot the distribution of mean CH4 concentration. With vertical lines limiting the top and bottom 10% obrservations
+
+```{r, echo=FALSE, fig.width = 4, fig.height = 4}
+
+
+
+CH4mean_hist_fig <- ggplot(conc_df) +
+  geom_density(aes(x = CH4mean))+
+  scale_x_log10()+
+  geom_vline(aes(xintercept = quantile(CH4mean, 0.1, na.rm= TRUE)), linetype=2)+
+    geom_vline(aes(xintercept = quantile(CH4mean, 0.9, na.rm= TRUE)), linetype=2)+
+  theme_classic()
+
+print(CH4mean_hist_fig)
+
+
+
+```
+
+Ok let's find which sites are the bottom 10%
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 100px;"'}
+
+conc_df %>% 
+  filter(CH4mean <  quantile(CH4mean, 0.1, na.rm= TRUE)  ) %>% 
+  group_by(Site_Nid) %>% 
+  summarise(Publication_Nid = first(Publication_Nid),
+            CH4mean = mean(CH4mean, na.rm = TRUE),
+            unit= first(orig_CH4unit)) %>% 
+  arrange(CH4mean) %>% 
+  print(n=Inf)
+
+
+```
+
+And in which papers are those sites:
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 100px;"'}
+
+conc_df %>% 
+  filter(CH4mean <  quantile(CH4mean, 0.1, na.rm= TRUE) ) %>% 
+  group_by(Publication_Nid) %>% 
+  summarise(CH4mean = mean(CH4mean, na.rm = TRUE),
+            unit= first(orig_CH4unit)) %>% 
+  arrange(CH4mean) %>% 
+  print(n=Inf)
+
+
+```
+
+Now let's find which sites are the top 10%
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter( CH4mean >  quantile(CH4mean, 0.9, na.rm= TRUE)  ) %>% 
+  group_by(Site_Nid) %>% 
+  summarise(Publication_Nid = first(Publication_Nid),
+            CH4mean = mean(CH4mean, na.rm = TRUE),
+            unit= first(orig_CH4unit)) %>% 
+  arrange(desc(CH4mean)) %>% 
+  print(n=Inf)
+
+
+```
+
+And in which papers, sorted from high to low:
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter(CH4mean >  quantile(CH4mean, 0.9, na.rm= TRUE)  ) %>% 
+  group_by(Publication_Nid) %>% 
+  summarise(CH4mean = mean(CH4mean, na.rm = TRUE),
+            unit= first(orig_CH4unit)) %>% 
+  arrange(desc(CH4mean)) %>% 
+  print(n=Inf)
+
+
+```
+
+### Extreme carbon dioxide values
+For the other gasses, given that the number of sites is huge, we relax the limit to top/bottom 5%.
+
+Let's plot the distribution of mean CO2 concentration. With vertical lines limiting the top and bottom 5% observations
+
+```{r, echo=FALSE, fig.width = 4, fig.height = 4}
+
+
+
+CO2mean_hist_fig <- ggplot(conc_df) +
+  geom_density(aes(x = CO2mean))+
+  scale_x_log10()+
+  geom_vline(aes(xintercept = quantile(CO2mean, 0.1, na.rm= TRUE)), linetype=2)+
+    geom_vline(aes(xintercept = quantile(CO2mean, 0.9, na.rm= TRUE)), linetype=2)+
+  theme_classic()
+
+print(CO2mean_hist_fig)
+
+
+
+```
+
+Ok let's find which sites are the bottom 5%
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter(CO2mean <  quantile(CO2mean, 0.05, na.rm= TRUE)  ) %>% 
+  group_by(Site_Nid) %>% 
+  summarise(Publication_Nid = first(Publication_Nid),
+            CO2mean = mean(CO2mean, na.rm = TRUE),
+            unit= first(orig_CO2unit)) %>% 
+  arrange(CO2mean) %>% 
+  print(n=Inf)
+
+
+```
+
+And in which papers are those sites:
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter(CO2mean <  quantile(CO2mean, 0.05, na.rm= TRUE) ) %>% 
+  group_by(Publication_Nid) %>% 
+  summarise(CO2mean = mean(CO2mean, na.rm = TRUE),
+            unit= first(orig_CO2unit)) %>% 
+  arrange(CO2mean) %>% 
+  print(n=Inf)
+
+
+```
+
+Now let's find which sites are the top 5%
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter( CO2mean >  quantile(CO2mean, 0.95, na.rm= TRUE)  ) %>% 
+  group_by(Site_Nid) %>% 
+  summarise(Publication_Nid = first(Publication_Nid),
+            CO2mean = mean(CO2mean, na.rm = TRUE),
+            unit= first(orig_CO2unit)) %>% 
+  arrange(desc(CO2mean)) %>% 
+  print(n=Inf)
+
+
+```
+
+And in which papers:
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter(CO2mean >  quantile(CO2mean, 0.95, na.rm= TRUE)  ) %>% 
+  group_by(Publication_Nid) %>% 
+  summarise(CO2mean = mean(CO2mean, na.rm = TRUE),
+            unit= first(orig_CO2unit)) %>% 
+  arrange(desc(CO2mean)) %>% 
+  print(n=Inf)
+
+
+```
+
+### Extreme nitrous oxide values
+
+Let's plot the distribution of mean N2O concentration. With vertical lines limiting the top and bottom 5% observations
+
+```{r, echo=FALSE, fig.width = 4, fig.height = 4}
+N2Omean_hist_fig <- ggplot(conc_df) +
+  geom_density(aes(x = N2Omean))+
+  scale_x_log10()+
+  geom_vline(aes(xintercept = quantile(N2Omean, 0.05, na.rm= TRUE)), linetype=2)+
+    geom_vline(aes(xintercept = quantile(N2Omean, 0.95, na.rm= TRUE)), linetype=2)+
+  theme_classic()
+
+print(N2Omean_hist_fig)
+
+
+
+```
+
+Ok let's find which sites are the bottom 5%
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter(N2Omean <  quantile(N2Omean, 0.05, na.rm= TRUE)  ) %>% 
+  group_by(Site_Nid) %>% 
+  summarise(Publication_Nid = first(Publication_Nid),
+            N2Omean = mean(N2Omean, na.rm = TRUE),
+            unit= first(orig_N2Ounit)) %>% 
+  arrange(N2Omean) %>% 
+  print(n=Inf)
+
+
+```
+
+And in which papers are those sites:
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter(N2Omean <  quantile(N2Omean, 0.05, na.rm= TRUE) ) %>% 
+  group_by(Publication_Nid) %>% 
+  summarise(N2Omean = mean(N2Omean, na.rm = TRUE),
+            unit= first(orig_N2Ounit)) %>% 
+  arrange(N2Omean) %>% 
+  print(n=Inf)
+
+
+```
+
+Now let's find which sites are the top 10%
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter( N2Omean >  quantile(N2Omean, 0.95, na.rm= TRUE)  ) %>% 
+  group_by(Site_Nid) %>% 
+  summarise(Publication_Nid = first(Publication_Nid),
+            N2Omean = mean(N2Omean, na.rm = TRUE),
+            unit= first(orig_N2Ounit)) %>% 
+  arrange(desc(N2Omean)) %>% 
+  print(n=Inf)
+
+
+```
+
+And in which papers:
+ 
+```{r, echo= FALSE, attr.output='style="max-height: 200px;"'}
+
+conc_df %>% 
+  filter(N2Omean >  quantile(N2Omean, 0.95, na.rm= TRUE)  ) %>% 
+  group_by(Publication_Nid) %>% 
+  summarise(N2Omean = mean(N2Omean, na.rm = TRUE),
+            unit= first(orig_N2Ounit)) %>% 
+  arrange(desc(N2Omean)) %>% 
+  print(n=Inf)
+
+
+```
+
+
+
