@@ -13,6 +13,13 @@ ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) +
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
   theme_bw()
 
+#N2O
+ggplot(conc_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
+  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw()
+
 highN2O <- filter(conc_df, 
                   orig_N2Ounit %in% c("mgN/L", "nmol/L", "umol/L"), 
                   N2Omean > 5)
@@ -45,6 +52,23 @@ ggplot(N2O_df, aes(x = orig_N2Ounit, y = N2Omean)) +
 #             data = badN2O, aes(col = as.factor(Publication_Nid)))
 
 
+
+
+#CO2
+ggplot(conc_df, aes(x = orig_CO2unit, y = CO2mean)) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
+  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw()
+
+
+#CH4
+ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
+  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw()
+
 #Look at ppm CH4 papers
 ggplot(filter(conc_df, orig_CH4unit == "ppm CH4"), aes(x = as.factor(Publication_Nid),
                                                        y = CH4mean)) + 
@@ -62,11 +86,6 @@ ggplot(flux_df, aes(x = DiffusiveFluxunit, y = DiffusiveCH4FluxMean)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90))
 
-ggplot(conc_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
-  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
-  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
-  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
-  theme_bw()
 
 ggplot(conc_df, aes(x = CH4mean)) + 
   facet_wrap(~orig_CH4unit, scales = "free_y") + 
