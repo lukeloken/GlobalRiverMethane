@@ -144,44 +144,6 @@ save(conc_df, flux_df,
 # load(file.path(path_to_dropbox, "db_processingR", 
 #                "MethDB_tables_converted.rda"))
 
-ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) + 
-  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
-  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
-  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
-  theme_bw()
-
-#Look at ppm CH4 papers
-ggplot(filter(conc_df, orig_CH4unit == "ppm CH4"), aes(x = as.factor(Publication_Nid),
-                                                       y = CH4mean)) + 
-  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
-  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
-  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 45)) +
-  ggtitle("original CH4 unit = ppm CH4")
-
-ggplot(flux_df, aes(x = DiffusiveFluxunit, y = DiffusiveCH4FluxMean)) + 
-  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
-  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
-  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 90))
-
-ggplot(conc_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
-  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
-  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
-  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
-  theme_bw()
-
-ggplot(conc_df, aes(x = CH4mean)) + 
-  facet_wrap(~orig_CH4unit, scales = "free_y") + 
-  geom_histogram() + 
-  # geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
-  # geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
-  scale_x_log10(breaks = 10^ seq(-10, 10, 1)) +
-  theme_bw()
-
-
 #Quick plots of distributions
 ggplot(conc_df) +
   geom_histogram(aes(x = CH4mean)) +
