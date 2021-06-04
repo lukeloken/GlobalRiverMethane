@@ -13,6 +13,28 @@ ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) +
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
   theme_bw()
 
+highCH4 <- filter(conc_df, 
+                  orig_CH4unit %in% c("mol/L"), 
+                  CH4mean > 1000)
+
+unique(highCH4$Publication_Nid)
+
+CH4_df <- conc_df %>%
+  mutate(Publication_Nid = factor(Publication_Nid, 
+                                  c(unique(highCH4$Publication_Nid), "other"))) %>%
+  mutate(Publication_Nid = ifelse(is.na(Publication_Nid), 
+                                  "other", 
+                                  as.character(Publication_Nid))) %>%
+  arrange(desc(Publication_Nid))
+
+ggplot(CH4_df, aes(x = orig_CH4unit, y = CH4mean)) + 
+  geom_jitter(alpha = 0.5, width = 0.3, height = 0, aes(color = Publication_Nid)) +
+  # geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw() + 
+  scale_color_manual(values = c(brewer.pal(length(unique(CH4_df$Publication_Nid)) - 1, 
+                                           "Dark2"), "lightgrey")) 
+
 #N2O
 ggplot(conc_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
   geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
@@ -21,11 +43,11 @@ ggplot(conc_df, aes(x = orig_N2Ounit, y = N2Omean)) +
   theme_bw()
 
 highN2O <- filter(conc_df, 
-                  orig_N2Ounit %in% c("mgN/L", "nmol/L", "umol/L"), 
+                  # orig_N2Ounit %in% c("mgN/L", "nmol/L", "umol/L"), 
                   N2Omean > 5)
 
 lowN2O <- filter(conc_df, 
-                 orig_N2Ounit %in% c("mgN/L", "nmol/L", "umol/L"), 
+                 # orig_N2Ounit %in% c("mgN/L", "nmol/L", "umol/L"), 
                  N2Omean < .001)
 
 badN2O <- bind_rows(highN2O, lowN2O)
@@ -38,7 +60,8 @@ N2O_df <- conc_df %>%
                                   c(unique(badN2O$Publication_Nid), "other"))) %>%
   mutate(Publication_Nid = ifelse(is.na(Publication_Nid), 
                                   "other", 
-                                  as.character(Publication_Nid)))
+                                  as.character(Publication_Nid))) %>%
+  arrange(desc(Publication_Nid))
 
 
 ggplot(N2O_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
@@ -47,7 +70,7 @@ ggplot(N2O_df, aes(x = orig_N2Ounit, y = N2Omean)) +
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
   theme_bw() + 
   scale_color_manual(values = c(brewer.pal(length(unique(N2O_df$Publication_Nid)) - 1, 
-                                           "Paired"), "lightgrey")) #+
+                                           "Dark2"), "lightgrey")) #+
 # geom_jitter(alpha = 0.5, width = 0.3, height = 0, 
 #             data = badN2O, aes(col = as.factor(Publication_Nid)))
 
@@ -61,6 +84,27 @@ ggplot(conc_df, aes(x = orig_CO2unit, y = CO2mean)) +
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
   theme_bw()
 
+
+highCO2 <- filter(conc_df, 
+                  CO2mean > 10000)
+
+unique(highCO2$Publication_Nid)
+
+CO2_df <- conc_df %>%
+  mutate(Publication_Nid = factor(Publication_Nid, 
+                                  c(unique(highCO2$Publication_Nid), "other"))) %>%
+  mutate(Publication_Nid = ifelse(is.na(Publication_Nid), 
+                                  "other", 
+                                  as.character(Publication_Nid))) %>%
+  arrange(desc(Publication_Nid))
+
+ggplot(CO2_df, aes(x = orig_CO2unit, y = CO2mean)) + 
+  geom_jitter(alpha = 0.5, width = 0.3, height = 0, aes(color = Publication_Nid)) +
+  # geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw() + 
+  scale_color_manual(values = c(brewer.pal(length(unique(CO2_df$Publication_Nid)) - 1, 
+                                           "Dark2"), "lightgrey")) 
 
 #CH4
 ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) + 
