@@ -30,6 +30,7 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
   mutate(Site_Nid = as.character(Site_Nid)) %>% 
+  rename(Elevation_m = Elevation_m_reported) %>%
   left_join(gis_df %>% select(Site_Nid, lat_new = lat, lon_new = lon, elevation_m_new = z, slope),
             by = "Site_Nid")
 # 
@@ -67,8 +68,10 @@ names(concentrations) <- gsub("Flux\\?", "FluxYesNo", names(concentrations))
 # names(concentrations) <- gsub("WaterTemp_", "WaterTemp", names(concentrations))
 
 
-data.frame(concentrations[which(is.na(concentrations$Date_start )),])
-data.frame(concentrations[which(is.na(concentrations$Date_end )),])
+dim(data.frame(concentrations[which(is.na(concentrations$Date_start )),]))
+unique(concentrations$Publication_Nid[which(is.na(concentrations$Date_start ))])
+
+dim(data.frame(concentrations[which(is.na(concentrations$Date_end )),]))
 data.frame(concentrations[which(is.na(concentrations$Site_Nid)),])
 
 #There are two types of dates in this dataset. some are excel format, others are m/d/y. 
@@ -94,10 +97,10 @@ fluxes <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                      sheet = "MethDB_2_flux", guess_max = 4000)
 
 #Change names of dates, seasons, and counts
-names(fluxes)[grepl("Date", names(fluxes))] <- c("Date_start", "Date_end", "Date_start_Bubble", "Date_end_Bubble")
-names(fluxes)[grepl("Season", names(fluxes))] <- c("Season", "Season_Bubble")
+names(fluxes)[grepl("Date", names(fluxes))] <- c("Date_start", "Date_end")
+names(fluxes)[grepl("Season", names(fluxes))] <- c("Season")
                                                    
-names(fluxes)[grepl("Count", names(fluxes))] <- paste0("SampleCount_", c("Diffusive", "Bubble", "Total")) 
+names(fluxes)[grepl("Count", names(fluxes))] <- paste0("SampleCount_", c("Diffusive", "Bubble")) 
 
 names(fluxes) <- gsub("\\..*","",names(fluxes))
 
@@ -105,12 +108,14 @@ names(fluxes) <- gsub("\\..*","",names(fluxes))
 names(fluxes) <- gsub(" ", "", names(fluxes))
 
 
+
 fluxes <- fluxes %>%
+  select(-which(names(fluxes) == "")) %>%
   mutate(across(contains("Date"), ~as.Date(.x))) %>%
   filter(!is.na(Site_Nid))
 
 data.frame(fluxes[which(is.na(fluxes$Date_start )),])
-data.frame(fluxes[which(is.na(fluxes$Date_end )),])
+data.frame(fluxes[which(is.na(fluxes$Date_end )),])$Publication_Nid
 data.frame(fluxes[which(is.na(fluxes$Site_Nid)),])
 
 
