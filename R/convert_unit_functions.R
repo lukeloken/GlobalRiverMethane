@@ -70,6 +70,30 @@ getSaturation <- function(LakeKh, AtmP, gas){
 }
 
 
+replace_BDLs <- function(x, replace = -999999){
+  
+ x_nospace <- gsub(" ", "", x)
+ x_nospace[which(x_nospace == "")] <- NA
+ 
+ x_numeric <- suppressWarnings(as.numeric(x_nospace))
+ 
+ character_row <- which(!is.finite(x_numeric) & !is.na(x_nospace))
+ 
+ x_numeric[character_row] <- replace
+ 
+return(x_numeric)
+ 
+ #look at data that are being classified as below detection
+ # x[character_row]
+ # x[-character_row]
+ 
+}
+
+#Test function
+# x <- c(13, "", "BDL", " ", "   ", "45", NA, "-1", "  ", 5, "<0.001")
+# x_out <- replace_BDLs(x)
+# data.frame(x, x_out)
+
 
 # Master function to convert all gas and nutrient concentrations
 
@@ -99,8 +123,10 @@ convert_conc_units <- function(concentrations, unit_convert_table){
     stop("One of the following units is missing in unit conversion table: ", 
             paste(missing_units, collapse = ", "))
   }
-    
-  # Calculate best temp available and elevation-based pressure. 
+  
+
+  
+  # Calculate best temp and elevation available to calculate elevation-based pressure. 
   # These variables are only used for converting ppm and uatm to molar units
   concentrations_out <- concentrations %>%
     mutate(WaterTempUsed = ifelse(is.finite(WaterTemp_actual), 
@@ -108,7 +134,12 @@ convert_conc_units <- function(concentrations, unit_convert_table){
                                   ifelse(is.finite(WaterTemp_est), 
                                          WaterTemp_est, 
                                          NA)), 
-           Pressure = estimate_pressure(Elevation_m))
+           ElevationUsed = ifelse(is.finite(Elevation_m), 
+                                  Elevation_m,
+                                  ifelse(is.finite(elevation_m_new), 
+                                         elevation_m_new, 
+                                         NA)),
+           Pressure = estimate_pressure(ElevationUsed))
   
   # Convert uatm and ppm to umol/L
   # if ppb value*kh/pressure/1000
@@ -124,9 +155,9 @@ convert_conc_units <- function(concentrations, unit_convert_table){
            across(c("CH4min", 
                     "CH4max", 
                     "CH4mean",
-                    "CH4StDev",
+                    "CH4_SD",
                     "CH4median"),
-                  ~as.numeric(.x)*factor)) %>%
+                  ~suppressWarnings(as.numeric(.x))*factor)) %>%
     mutate(new_CH4unit = ifelse(CH4unit %in% c("ppm CH4", "ppb CH4", "uatm CH4"),
                                 "umol/L", 
                                 NA)) %>%
@@ -142,9 +173,9 @@ convert_conc_units <- function(concentrations, unit_convert_table){
            across(c("CO2min", 
                     "CO2max", 
                     "CO2mean",
-                    "CO2stdev",
+                    "CO2_SD",
                     "CO2median"),
-                  ~as.numeric(.x)*factor))  %>%
+                  ~suppressWarnings(as.numeric(.x))*factor))  %>%
     mutate(new_CO2unit = ifelse(CO2units %in% c("ppm CO2", "ppb CO2", "uatm CO2"),
                                 "umol/L", 
                                 NA)) %>%
@@ -162,14 +193,15 @@ convert_conc_units <- function(concentrations, unit_convert_table){
            across(c("N2Omin", 
                     "N2Omax", 
                     "N2Omean",
-                    "N2Ostdev",
+                    "N2O_SD",
                     "N2Omedian"),
-                  ~as.numeric(.x)*factor)) %>%
+                  ~suppressWarnings(as.numeric(.x))*factor)) %>%
     mutate(new_N2Ounit = ifelse(N2Ounits %in% c("ppm N2O", "ppb N2O", "uatm N2O"),
                                 "umol/L", 
                                 NA)) %>%
     rename(orig_N2Ounit = N2Ounits) %>%
-    select(-factor, -kh, -Pressure, -WaterTempUsed)
+    select(-factor, -kh, -Pressure, -WaterTempUsed, 
+           -Elevation_m, -elevation_m_new, -ElevationUsed)
   
   
   #Non-pressure based concentration conversions
@@ -184,9 +216,9 @@ convert_conc_units <- function(concentrations, unit_convert_table){
     mutate(across(.cols = c("CH4min", 
                             "CH4max", 
                             "CH4mean",
-                            "CH4StDev",
+                            "CH4_SD",
                             "CH4median"), 
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_CH4unit = ifelse(orig_CH4unit %in% allunits, 
                                 goodunits$unit[which(goodunits$variable == "CH4")],
                                 new_CH4unit)) %>%
@@ -202,9 +234,9 @@ convert_conc_units <- function(concentrations, unit_convert_table){
     mutate(across(.cols = c("CO2min", 
                             "CO2max", 
                             "CO2mean",
-                            "CO2stdev",
+                            "CO2_SD",
                             "CO2median"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_CO2unit = ifelse(orig_CO2unit %in% allunits, 
                                 goodunits$unit[which(goodunits$variable == "CO2")],
                                 new_CO2unit)) %>%
@@ -220,9 +252,9 @@ convert_conc_units <- function(concentrations, unit_convert_table){
     mutate(across(.cols = c("N2Omin", 
                             "N2Omax", 
                             "N2Omean",
-                            "N2Ostdev",
+                            "N2O_SD",
                             "N2Omedian"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_N2Ounit = ifelse(orig_N2Ounit %in% allunits, 
                                 goodunits$unit[which(goodunits$variable == "N2O")],
                                 new_N2Ounit)) %>%
@@ -234,7 +266,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
               by = c("NO3units" = "unit")) %>%
     rename(orig_NO3unit = NO3units) %>%
     mutate(across(.cols = c("NO3actual"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_NO3unit = ifelse(orig_NO3unit %in% allunits, 
                                 goodunits$unit[which(goodunits$variable == "NO3")],
                                 NA)) %>%
@@ -246,7 +278,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
               by = c("NH4units" = "unit")) %>%
     rename(orig_NH4unit = NH4units) %>%
     mutate(across(.cols = c("NH4actual"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_NH4unit = ifelse(orig_NH4unit %in% allunits, 
                                 goodunits$unit[which(goodunits$variable == "NH4")],
                                 NA)) %>%
@@ -258,7 +290,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
               by = c("TNunits" = "unit")) %>%
     rename(orig_TNunit = TNunits) %>%
     mutate(across(.cols = c("TNactual"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_TNunit = ifelse(orig_TNunit %in% allunits, 
                                goodunits$unit[which(goodunits$variable == "TN")],
                                NA)) %>%
@@ -270,7 +302,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
               by = c("TPunits" = "unit")) %>%
     rename(orig_TPunit = TPunits) %>%
     mutate(across(.cols = c("TPactual"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_TPunit = ifelse(orig_TPunit %in% allunits, 
                                goodunits$unit[which(goodunits$variable == "TP")],
                                NA)) %>%
@@ -282,7 +314,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
               by = c("SRPunits" = "unit")) %>%
     rename(orig_SRPunit = SRPunits) %>%
     mutate(across(.cols = c("SRPactual"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_SRPunit = ifelse(orig_SRPunit %in% allunits, 
                                 goodunits$unit[which(goodunits$variable == "SRP")],
                                 NA)) %>%
@@ -294,7 +326,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
               by = c("DOCunits" = "unit")) %>%
     rename(orig_DOCunit = DOCunits) %>%
     mutate(across(.cols = c("DOCactual"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_DOCunit = ifelse(orig_DOCunit %in% allunits, 
                                 goodunits$unit[which(goodunits$variable == "DOC")],
                                 NA)) %>%
@@ -306,12 +338,48 @@ convert_conc_units <- function(concentrations, unit_convert_table){
               by = c("Qunits" = "unit")) %>%
     rename(orig_Qunit = Qunits) %>%
     mutate(across(.cols = c("Q"),
-                  ~as.numeric(.x)*factor), 
+                  ~suppressWarnings(as.numeric(.x))*factor), 
            new_Qunit = ifelse(orig_Qunit %in% allunits, 
                               goodunits$unit[which(goodunits$variable == "Q")],
                               NA)) %>%
     select(-variable, -factor)
   
+  # ###########################################################
+  # replace all columns with characters with -999999
+  # These are the "BDLs", "<0.06", etc. in the data columns
+  # ###########################################################
+
+  data_names <- c("CH4min", "CH4max", "CH4mean", "CH4_SD", "CH4median", 
+                  "CO2min", "CO2max", "CO2mean", "CO2_SD", "CO2median", 
+                  "N2Omin", "N2Omax", "N2Omean", "N2O_SD", "N2Omedian",
+                  "NO3actual", "NH4actual", "TNactual", 
+                  "SRPactual", "TPactual", "DOCactual",
+                  "Q")
+  
+  #replace all characters in these columns with "-999999"
+  replace_value <- -999999
+  conc_BDL <- concentrations %>% 
+    mutate(across(all_of(data_names), ~replace_BDLs(.x, replace = replace_value)))
+  
+  #Look at a few examples to test behavior
+  # data.frame(concentrations[which(concentrations$CH4mean == "<0.06"),])
+  # data.frame(conc_BDL[which(concentrations$CH4mean == "<0.06"),])
+  # 
+  # data.frame(new = concentrations$CH4mean[which(concentrations$CH4mean == "BDL")], 
+  #            old = conc_BDL$CH4mean[which(concentrations$CH4mean == "BDL")])
+  # 
+  # data.frame(new = concentrations$CH4mean[which(conc_BDL$CH4mean == replace_value)],
+  #            old = conc_BDL$CH4mean[which(conc_BDL$CH4mean == replace_value)])
+  # 
+  # 
+  # data.frame(conc_BDL[which(conc_BDL$CH4mean == -999999),])
+  
+  
+  #Loop through data columns and replace 
+  name_i = data_names[3]
+for (name_i in data_names){
+  concentrations_out[which(conc_BDL[,name_i] == "-999999"),name_i] <- -999999
+}
   
   return(concentrations_out)
   
@@ -347,17 +415,17 @@ convert_flux_units <- function(fluxes, unit_convert_table){
   #CH4 diffusive flux
   fluxes_out <- fluxes %>%
     left_join(filter(unit_convert_table, variable == "CH4_flux"), 
-              by = c("DiffusiveFluxunit" = "unit")) %>%
-    mutate(factor = ifelse(DiffusiveFluxunit %in% unit_convert_table$unit, 
+              by = c("Diffusive_Flux_unit" = "unit")) %>%
+    mutate(factor = ifelse(Diffusive_Flux_unit %in% unit_convert_table$unit, 
                            factor, 
                            1))  %>% 
-    mutate(across(.cols = c("DiffusiveCH4FluxMin", 
-                            "DiffusiveCH4FluxMax",
-                            "DiffusiveCH4FluxMean", 
-                            "DiffusiveCH4FluxStddev",
-                            "DiffusiveCH4FluxMedian"),
-                  ~as.numeric(.x)*factor), 
-           new_CH4DiffusiveFluxunit = ifelse(DiffusiveFluxunit %in% allunits, 
+    mutate(across(.cols = c("Diffusive_CH4_Flux_Min", 
+                            "Diffusive_CH4_Flux_Max",
+                            "Diffusive_CH4_Flux_Mean", 
+                            "Diffusive_CH4_Flux_SD",
+                            "Diffusive_CH4_Flux_Median"),
+                  ~suppressWarnings(as.numeric(.x))*factor), 
+           new_Diffusive_Flux_unit = ifelse(Diffusive_Flux_unit %in% allunits, 
                                              goodunits$unit[which(goodunits$variable == "CH4_flux")],
                                              NA)) %>%
     select(-variable, -factor)
@@ -365,17 +433,17 @@ convert_flux_units <- function(fluxes, unit_convert_table){
   #CH4 bubble flux
   fluxes_out <- fluxes_out %>%
     left_join(filter(unit_convert_table, variable == "CH4_flux"), 
-              by = c("BubbleCH4Fluxunit" = "unit")) %>%
-    mutate(factor = ifelse(BubbleCH4Fluxunit %in% unit_convert_table$unit, 
+              by = c("Eb_CH4_Flux_unit" = "unit")) %>%
+    mutate(factor = ifelse(Eb_CH4_Flux_unit %in% unit_convert_table$unit, 
                            factor, 
                            1))  %>% 
-    mutate(across(.cols = c("BubbleCH4FluxMin", 
-                            "BubbleCH4FluxMax",
-                            "BubbleCH4FluxMean", 
-                            "BubbleCH4FluxStddev",
-                            "BubbleCH4FluxMedian"),
-                  ~as.numeric(.x)*factor), 
-           new_CH4BubbleFluxunit = ifelse(BubbleCH4Fluxunit %in% allunits, 
+    mutate(across(.cols = c("Eb_CH4_Flux_Min", 
+                            "Eb_CH4_Flux_Max",
+                            "Eb_CH4_Flux_Mean", 
+                            "Eb_CH4_Flux_SD",
+                            "Eb_CH4_Flux_median"),
+                  ~suppressWarnings(as.numeric(.x))*factor), 
+           new_Eb_CH4_Flux_unit = ifelse(Eb_CH4_Flux_unit %in% allunits, 
                                           goodunits$unit[which(goodunits$variable == "CH4_flux")],
                                           NA)) %>%
     select(-variable, -factor)
@@ -383,17 +451,17 @@ convert_flux_units <- function(fluxes, unit_convert_table){
   #CH4 total flux
   fluxes_out <- fluxes_out %>%
     left_join(filter(unit_convert_table, variable == "CH4_flux"), 
-              by = c("TotalCH4FluxUnit" = "unit")) %>%
-    mutate(factor = ifelse(TotalCH4FluxUnit %in% unit_convert_table$unit, 
+              by = c("Total_Flux_unit" = "unit")) %>%
+    mutate(factor = ifelse(Total_Flux_unit %in% unit_convert_table$unit, 
                            factor, 
                            1))  %>% 
-    mutate(across(.cols = c("TotalCH4FluxMin", 
-                            "TotalCH4FluxMax",
-                            "TotalCH4FluxMean", 
-                            "TotalCH4FluxStddev",
-                            "TotalCH4FluxMedian"),
-                  ~as.numeric(.x)*factor), 
-           new_CH4TotalFluxunit = ifelse(TotalCH4FluxUnit %in% allunits, 
+    mutate(across(.cols = c("Total_CH4_Flux_Min", 
+                            "Total_CH4_Flux_Max",
+                            "Total_CH4_Flux_Mean", 
+                            "Total_CH4_Flux_SD",
+                            "Total_CH4_Flux_Median"),
+                  ~suppressWarnings(as.numeric(.x))*factor), 
+           new_Total_Flux_unit = ifelse(Total_Flux_unit %in% allunits, 
                                          goodunits$unit[which(goodunits$variable == "CH4_flux")],
                                          NA)) %>%
     select(-variable, -factor)
@@ -401,17 +469,17 @@ convert_flux_units <- function(fluxes, unit_convert_table){
   #CO2 flux
   fluxes_out <- fluxes_out %>%
     left_join(filter(unit_convert_table, variable == "CO2_flux"), 
-              by = c("CO2Fluxunit" = "unit")) %>%
-    mutate(factor = ifelse(CO2Fluxunit %in% unit_convert_table$unit, 
+              by = c("CO2_Flux_unit" = "unit")) %>%
+    mutate(factor = ifelse(CO2_Flux_unit %in% unit_convert_table$unit, 
                            factor, 
                            1))  %>% 
-    mutate(across(.cols = c("CO2FluxMin", 
-                            "CO2FluxMax",
-                            "CO2FluxMean", 
-                            "CO2FluxStddev",
-                            "CO2FluxMedian"),
-                  ~as.numeric(.x)*factor), 
-           new_CO2Fluxunit = ifelse(CO2Fluxunit %in% allunits, 
+    mutate(across(.cols = c("CO2_Flux_Min", 
+                            "CO2_Flux_Max",
+                            "CO2_Flux_Mean", 
+                            "CO2_Flux_SD",
+                            "CO2_Flux_Median"),
+                  ~suppressWarnings(as.numeric(.x))*factor), 
+           new_CO2_Flux_unit = ifelse(CO2_Flux_unit %in% allunits, 
                                     goodunits$unit[which(goodunits$variable == "CO2_flux")],
                                     NA)) %>%
     select(-variable, -factor)
@@ -419,20 +487,62 @@ convert_flux_units <- function(fluxes, unit_convert_table){
   #N2O diffusive flux
   fluxes_out <- fluxes_out %>%
     left_join(filter(unit_convert_table, variable == "N2O_flux"), 
-              by = c("N2OFluxunit" = "unit")) %>%
-    mutate(factor = ifelse(N2OFluxunit %in% unit_convert_table$unit, 
+              by = c("N2O_Flux_unit" = "unit")) %>%
+    mutate(factor = ifelse(N2O_Flux_unit %in% unit_convert_table$unit, 
                            factor, 
                            1))  %>% 
-    mutate(across(.cols = c("N2OFluxMin", 
-                            "N2OFluxMax",
-                            "N2OFluxMean", 
-                            "N2OFluxStddev",
-                            "N2OFluxMedian"),
-                  ~as.numeric(.x)*factor), 
-           new_N2OFluxunit = ifelse(N2OFluxunit %in% allunits, 
+    mutate(across(.cols = c("N2O_Flux_Min", 
+                            "N2O_Flux_Max",
+                            "N2O_Flux_Mean", 
+                            "N2O_Flux_SD",
+                            "N2O_Flux_Median"),
+                  ~suppressWarnings(as.numeric(.x))*factor), 
+           new_N2O_Flux_unit = ifelse(N2O_Flux_unit %in% allunits, 
                                     goodunits$unit[which(goodunits$variable == "N2O_flux")],
                                     NA)) %>%
     select(-variable, -factor)
+  
+  
+  
+  # ###########################################################
+  # replace all data columns with characters with -999999
+  # These are the "BDLs", "<0.06", etc. in the data columns
+  # ###########################################################
+  
+  flux_data_names <- c("Diffusive_CH4_Flux_Min", "Diffusive_CH4_Flux_Max",
+                       "Diffusive_CH4_Flux_Mean", "Diffusive_CH4_Flux_SD",
+                       "Diffusive_CH4_Flux_Median", 
+                       "Eb_CH4_Flux_Min", "Eb_CH4_Flux_Max",
+                       "Eb_CH4_Flux_Mean", "Eb_CH4_Flux_SD",
+                       "Eb_CH4_Flux_median",
+                       "Total_CH4_Flux_Min", "Total_CH4_Flux_Max",
+                       "Total_CH4_Flux_Mean", "Total_CH4_Flux_SD",
+                       "Total_CH4_Flux_Median",
+                       "CO2_Flux_Min", "CO2_Flux_Max",
+                       "CO2_Flux_Mean", "CO2_Flux_SD",
+                       "CO2_Flux_Median",
+                       "N2O_Flux_Min", "N2O_Flux_Max",
+                       "N2O_Flux_Mean", "N2O_Flux_SD",
+                       "N2O_Flux_Median")
+  
+  #replace all characters in these columns with "-999999"
+  replace_value <- -999999
+  flux_BDL <- fluxes %>% 
+    mutate(across(all_of(flux_data_names), ~replace_BDLs(.x, replace = replace_value)))
+  
+  #Look at a few examples to test behavior
+  # data.frame(new = fluxes$Diffusive_CH4_Flux_Mean[which(flux_BDL$Diffusive_CH4_Flux_Mean == replace_value)],
+  #            old = flux_BDL$Diffusive_CH4_Flux_Mean[which(flux_BDL$Diffusive_CH4_Flux_Mean == replace_value)])
+  # 
+  # 
+  # data.frame(conc_BDL[which(conc_BDL$CH4mean == -999999),])
+  
+  
+  #Loop through data columns and replace 
+  name_i = flux_data_names[1]
+  for (name_i in flux_data_names){
+    fluxes_out[which(flux_BDL[,name_i] == "-999999"),name_i] <- -999999
+  }
   
   return(fluxes_out)
 }
