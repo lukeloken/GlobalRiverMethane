@@ -29,9 +29,11 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
   rename(Elevation_m = Elevation_m_reported) %>%
-  left_join(gis_df %>% select(Site_Nid, lat_new, lon_new, 
-                              dist_m_to_old_site, elevation_m_new = z_m_combined, 
-                              subcatch_area_km, catch_area_km, slope_m_m),
+  left_join(gis_df %>% 
+              select(Site_Nid, lat_new, lon_new, 
+                     dist_m_to_old_site, elevation_m_new = z_m_combined, 
+                     subcatch_area_km, catch_area_km, slope_m_m) %>%
+              distinct(),
             by = "Site_Nid") %>%
   mutate(Site_Nid = as.character(Site_Nid))
   
