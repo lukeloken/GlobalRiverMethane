@@ -15,12 +15,20 @@ path_to_dropbox <-  "C:/Users/gero0008/Dropbox/SCIENCE/PostDoc/MethDB2.0" #gerar
 # MethDB_filename <- "MethDB_1Mar2020.xlsx"
 # MethDB_filename <- "MethDB_20Mar2021.xlsx"
 # MethDB_filename <- "MethDB_5Apr2021.xlsx"
-MethDB_filename <- "MethDB_1Aug2021.xlsx"
-
+# MethDB_filename <- "MethDB_1Aug2021.xlsx"
+# MethDB_filename <- "MethDB_2Aug2021.xlsx"
+MethDB_filename <- "MethDB_12Aug2021.xlsx"
 
 #Non set up below
 
 list.files(path_to_dropbox)
+
+if (MethDB_filename %in% list.files(path_to_dropbox)){
+  print("File name exists in folder")
+} else {
+  warning("MethDB file not in directory. Check name and path")
+}
+
 
 
 # load formatted and converted tables into your R environment

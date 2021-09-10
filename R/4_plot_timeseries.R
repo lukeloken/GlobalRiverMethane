@@ -12,7 +12,7 @@ conc_ts <- conc_df %>%
   filter(!is.na(CH4mean)) %>%
   group_by(Site_Nid) %>%
   mutate(n_means = n(),
-         Month = month(SampleDatestart)) %>%
+         Month = month(Date_start)) %>%
   filter(n_means >= 20) %>%
   mutate(Month = factor(Month, 1:12), 
          Season_date = case_when(Month %in% c(1,2,12) ~ "Winter", 
@@ -24,7 +24,7 @@ conc_ts <- conc_df %>%
                                              "Summer", "Autumn"))) %>%
   left_join(select(sites_df, Site_Nid, Latitude)) %>%
   mutate(Latitude = round(Latitude, 1), 
-         Date2020 = as.Date(paste0("2020-", month(SampleDatestart), "-", day(SampleDatestart))))
+         Date2020 = as.Date(paste0("2020-", month(Date_start), "-", day(Date_start))))
   
 site_arranged <- conc_ts %>%
   select(Site_Nid, Latitude)  %>%
@@ -39,7 +39,9 @@ conc_ts <- conc_ts %>%
 
 season_colors <- c("blue4", "springgreen3", "Red", "goldenrod1")
 
-CH4conc_ts_bysite <- ggplot(conc_ts, aes(x = SampleDatestart, y = CH4mean, col = Season_date)) +
+CH4conc_ts_bysite <- ggplot(conc_ts, aes(x = Date_start, 
+                                         y = CH4mean, 
+                                         col = Season_date)) +
   geom_point() +
   scale_y_log10() + 
   facet_wrap(~Site_Nid, scales = "free", 
@@ -65,7 +67,9 @@ ggsave(file.path(path_to_dropbox, "Figures", "Timeseries", "CH4conc_20plus_sites
        CH4conc_ts_bysite, 
        height = 10, width = 18)
 
-CH4conc_ts_bysite_v2 <- ggplot(conc_ts, aes(x = Date2020, y = CH4mean, col = Season_date)) +
+CH4conc_ts_bysite_v2 <- ggplot(conc_ts, aes(x = Date2020, 
+                                            y = CH4mean, 
+                                            col = Season_date)) +
   geom_point() +
   scale_y_log10() + 
   facet_wrap(~Site_Nid, scales = "free_y", 

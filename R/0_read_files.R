@@ -13,8 +13,7 @@ unit_convert_table <- readRDS("R/unit_convert_table.rds")
 #load GIS data
  gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
                            "methdb_explore", "data", 
-                           "methdb_gis.csv")) %>% 
-   mutate(Site_Nid =as.character(site_nid)) 
+                           "methdb_gis.csv")) 
 
 #load methdb papers table
 papers_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
@@ -29,10 +28,15 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 #load methdb site table
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
-  mutate(Site_Nid = as.character(Site_Nid)) %>% 
   rename(Elevation_m = Elevation_m_reported) %>%
-  left_join(gis_df %>% select(Site_Nid, lat_new = lat, lon_new = lon, elevation_m_new = z, slope),
-            by = "Site_Nid")
+  left_join(gis_df %>% 
+              select(Site_Nid, lat_new, lon_new, 
+                     dist_m_to_old_site, elevation_m_new = z_m_combined, 
+                     subcatch_area_km, catch_area_km, slope_m_m) %>%
+              distinct(),
+            by = "Site_Nid") %>%
+  mutate(Site_Nid = as.character(Site_Nid))
+  
 # 
 # dup_sites <- table(sites_df$Site_Nid)
 # dup_sites <- names(dup_sites[which(dup_sites>1)])
@@ -54,7 +58,7 @@ concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                              sheet = "MethDB_2_conc", guess_max = 20000) %>% 
   mutate(Site_Nid = as.character(Site_Nid),
          across(contains("Date_"), ~as.Date(.x))) %>%
-  left_join(select(sites_df, Site_Nid, Elevation_m)) %>%
+  left_join(select(sites_df, Site_Nid, Elevation_m, elevation_m_new)) %>%
   filter(!is.na(Publication_Nid) & !is.na(Site_Nid))
 
 
@@ -73,6 +77,9 @@ unique(concentrations$Publication_Nid[which(is.na(concentrations$Date_start ))])
 
 dim(data.frame(concentrations[which(is.na(concentrations$Date_end )),]))
 data.frame(concentrations[which(is.na(concentrations$Site_Nid)),])
+
+summary(select(concentrations, contains("Date")))
+
 
 #There are two types of dates in this dataset. some are excel format, others are m/d/y. 
 # concentrations <- concentrations %>%
@@ -175,23 +182,23 @@ ggplot(conc_df) +
   scale_x_log10()
 
 ggplot(flux_df) +
-  geom_histogram(aes(x = DiffusiveCH4FluxMean)) +
+  geom_histogram(aes(x = Diffusive_CH4_Flux_Mean)) +
   scale_x_log10()
 
 ggplot(flux_df) +
-  geom_histogram(aes(x = BubbleCH4FluxMean)) +
+  geom_histogram(aes(x = Eb_CH4_Flux_Mean)) +
   scale_x_log10()
 
 ggplot(flux_df) +
-  geom_histogram(aes(x = TotalCH4FluxMean)) +
+  geom_histogram(aes(x = Total_CH4_Flux_Mean)) +
   scale_x_log10()
 
 ggplot(flux_df) +
-  geom_histogram(aes(x = CO2FluxMean)) +
+  geom_histogram(aes(x = CO2_Flux_Mean)) +
   scale_x_log10()
 
 ggplot(flux_df) +
-  geom_histogram(aes(x = N2OFluxMean)) +
+  geom_histogram(aes(x = N2O_Flux_Mean)) +
   scale_x_log10()
 
 
