@@ -6,6 +6,7 @@ library(ggthemes)
 library(gridExtra)
 library(ggExtra)
 library(plotbiomes)
+library(rnaturalearth)
 
 #Load custom ggplot functions
 source("R/ggplot2_utils.R")
@@ -27,8 +28,9 @@ flux_df <- flux_df %>%
 sites_conc_flux <-sites_df %>% 
                 select(Site_Nid, Latitude, Longitude) %>% 
   left_join(conc_df %>% 
+              drop_na(CH4mean) %>% 
               group_by(Site_Nid) %>% 
-              summarise(n_conc= n()), by= "Site_Nid" ) %>% 
+              summarise(n_conc= n(), unit = first(orig_CH4unit)), by= "Site_Nid" ) %>% 
   left_join(flux_df %>% 
               group_by(Site_Nid) %>% 
               summarise(n_flux= n()), by= "Site_Nid"  ) %>% 
@@ -46,11 +48,11 @@ sites_conc_flux %>%
   group_by(type) %>% 
   tally()
 
-
 sites_conc_flux %>% 
-  filter(type == "none") %>%
+  filter(type == "none") %>% 
   select(Site_Nid) %>% 
-  print(n=100)
+  print(n=50)
+
 
 #figure of MAT vs MAP with global distribution
   mat_map <- 
@@ -80,11 +82,17 @@ sites_conc_flux %>%
 #global map
 map_sc <- map_data('world')
 
+rivers50 <- ne_download(scale = 50, type = 'rivers_lake_centerlines', category = 'physical')
+
+rivers_50_f <- fortify(rivers50)
+sp::plot(rivers50)
+
 map_world <- 
   ggplot()+
   geom_map(data=map_sc, map=map_sc,
            aes(x=long, y=lat, group=group, map_id=region),
            fill="gray90", colour="gray40", size=0.5)+
+  geom_path(data = rivers_50_f, aes(x=long, y=lat, group=group), color= "#add6f0")+
   geom_point(data=sites_conc_flux %>% filter(type != "none"), 
              aes(x=Longitude, y=Latitude, color = type), 
              size=2, alpha=.5)+
@@ -150,7 +158,7 @@ data_sum_year_continent <- conc_df %>%
     Continent == "Central America" ~ "North America",
     !Continent %in% c("Greenland", "Central America") ~ Continent
   )) %>% 
-  select(SampleDatestart, Continent) %>% 
+  select(Date_start, Continent) %>% 
   bind_rows(
     flux_df %>% 
       left_join(sites_df, by = "Site_Nid") %>%
@@ -159,16 +167,16 @@ data_sum_year_continent <- conc_df %>%
         Continent == "Central America" ~ "North America",
         !Continent %in% c("Greenland", "Central America") ~ Continent
       )) %>%
-      select(SampleDatestart, Continent) 
+      select(Date_start, Continent) 
   ) %>% 
-  group_by(date = SampleDatestart, 
+  group_by(date = as.Date(Date_start), 
            Continent = Continent ) %>% 
   summarise(obs = n()) %>% 
   ungroup(date, Continent) 
 
 data_plot_obs <- tibble(
-  date = rep(seq.Date( from = min(data_sum_year_continent$date), 
-                  to = max(data_sum_year_continent$date),
+  date = rep(seq.Date( from = min(data_sum_year_continent$date, na.rm = TRUE), 
+                  to = max(data_sum_year_continent$date, na.rm = TRUE),
                   by = "day"),
             each = length(unique(data_sum_year_continent$Continent)) 
   )) %>% 
@@ -206,22 +214,11 @@ plot_ts_concs <- ggplot(data_plot_obs)+
 together <- grid.arrange(world_densities, arrangeGrob(hists_n, plot_ts_concs, mat_map, ncol= 3), 
                          nrow = 2, heights = c(2,1))
 
-ggsave(together,  filename =  file.path(path_to_dropbox, "data ms files", "figures", "map_sites.png"),
+ggsave(together,  filename =  file.path(path_to_dropbox, "Figures", "map_sites.png"),
        width = 14, height = 9, dpi = 400)
 
 
 
-
-##### just to look at the world basin atlas, to have an idea of how big the catchments are... for reference, one "reach" is the whole krycklan
-library(leaflet)
-
-world_gis %>% 
-  filter(countries_sub == "Sweden") %>% 
-  st_transform( 4326) %>% 
-  leaflet() %>% 
-    addProviderTiles("Esri.WorldImagery") %>% 
-    addPolygons() %>% 
-    addMeasure() 
 
 ### some randoms stuff to check the countries
 
@@ -255,4 +252,7 @@ coauthors <- sites_df %>%
             n_flux = sum(n_flux))
 
 write_csv(coauthors, file.path(path_to_dropbox, "co_authors_summary.csv"))
+
+
+
           
