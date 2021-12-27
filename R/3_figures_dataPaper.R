@@ -3,21 +3,26 @@
 library(tidyverse)
 library(maps)
 library(ggthemes)
-library(gridExtra)
+library(patchwork)
 library(ggExtra)
 library(plotbiomes)
 library(rnaturalearth)
+library(sf)
+library(lwgeom)
 
 #Load custom ggplot functions
 source("R/ggplot2_utils.R")
 
+#for sf processing
+sf::sf_use_s2(FALSE)
 
 # load formatted and converted tables into your R environment
 load(file.path(path_to_dropbox, "db_processingR", 
                "MethDB_tables_converted.rda"))
 
-#world_gis <- read_rds(file.path(path_to_dropbox, "db_processingR", "methdb_explore", "data", 
- #              "basin_atlas_L12.rds"))
+world_gis <- read_rds(file.path(path_to_dropbox, "db_processingR", "methdb_explore", "data", 
+              "basin_atlas_L12.rds"))  %>% 
+  st_transform(4326)
 
 flux_df <- flux_df %>% 
   mutate(Site_Nid =as.character(Site_Nid))
@@ -28,9 +33,9 @@ flux_df <- flux_df %>%
 sites_conc_flux <-sites_df %>% 
                 select(Site_Nid, Latitude, Longitude) %>% 
   left_join(conc_df %>% 
-              drop_na(CH4mean) %>% 
+              drop_na(orig_CH4unit) %>% 
               group_by(Site_Nid) %>% 
-              summarise(n_conc= n(), unit = first(orig_CH4unit)), by= "Site_Nid" ) %>% 
+              summarise(n_conc= n()), by= "Site_Nid" ) %>% 
   left_join(flux_df %>% 
               group_by(Site_Nid) %>% 
               summarise(n_flux= n()), by= "Site_Nid"  ) %>% 
@@ -41,7 +46,9 @@ sites_conc_flux <-sites_df %>%
     is.na(n_conc) == FALSE & is.na(n_flux) == TRUE ~ "only concentrations",
     is.na(n_conc) == TRUE & is.na(n_flux) == TRUE ~ "none"),
     type = fct_relevel(type, "both", "only flux", "only concentrations", "none" )
-  ) 
+  ) %>%
+  st_as_sf( coords = c("Longitude", "Latitude"),  crs = 4326) %>%
+  st_transform("+proj=eqearth +wktext") 
 
 # quick look
 sites_conc_flux %>% 
@@ -50,7 +57,7 @@ sites_conc_flux %>%
 
 sites_conc_flux %>% 
   filter(type == "none") %>% 
-  select(Site_Nid) %>% 
+ # select(Site_Nid) %>% 
   print(n=50)
 
 
@@ -80,52 +87,150 @@ sites_conc_flux %>%
 
 
 #global map
-map_sc <- map_data('world')
+map_sc <- ne_download(scale = 110, type = 'land', category = 'physical', returnclass = "sf") %>%
+  st_transform("+proj=eqearth +wktext") 
 
-rivers50 <- ne_download(scale = 50, type = 'rivers_lake_centerlines', category = 'physical')
+rivers50 <- ne_download(scale = 10, type = 'rivers_lake_centerlines', 
+                        category = 'physical', returnclass = "sf" )
 
-rivers_50_f <- fortify(rivers50)
-sp::plot(rivers50)
+lakes <- ne_download(scale = 50, type = 'lakes', category = 'physical', returnclass = "sf")
 
 map_world <- 
   ggplot()+
-  geom_map(data=map_sc, map=map_sc,
-           aes(x=long, y=lat, group=group, map_id=region),
-           fill="gray90", colour="gray40", size=0.5)+
-  geom_path(data = rivers_50_f, aes(x=long, y=lat, group=group), color= "#add6f0")+
-  geom_point(data=sites_conc_flux %>% filter(type != "none"), 
-             aes(x=Longitude, y=Latitude, color = type), 
+  geom_sf(data=map_sc, fill="gray50", colour=NA, size=0.5)+
+  geom_sf(data = rivers50 %>% filter(scalerank < 8), color= "steelblue4")+
+  geom_sf(data=lakes %>% filter(scalerank < 1), fill="aliceblue", color=NA)+
+  geom_sf(data=sites_conc_flux %>% filter(type != "none"), 
+             aes( color = type), 
              size=2, alpha=.5)+
-  scale_y_continuous(limits=c(-52,80))+
-  scale_color_manual(values = c("#3b4994", "#5ac8c8", "#b364ac"))+
-  coord_sf(crs = 4087)+
+  scale_color_manual(values = c("olivedrab3",  "steelblue3", "darkgoldenrod2"), name="")+
+  coord_sf(crs = 4087, xlim=c(-18026400, 21026400), ylim=c(-7062156, 10602156))+
   labs(color= "")+
   theme_map()+
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        legend.position="none",
+        #axis.ticks.x=element_blank(),
+        #panel.background=element_rect(fill="gray50"),
+        legend.position=c(.12,.15),
         legend.text = element_text(size=13),
-        legend.justification = "center" )
+        legend.justification = "center" )+
+  guides(color = guide_legend(override.aes = list(size = 4, alpha = 1) ) )
 
 
-#add the density plots on the map
-world_densities <- ggMarginal(map_world, type="density", size=15, fill="#add6f0", color= NA)
 
-#histograms of observations
-# hists_n <- 
-# sites_conc_flux %>% 
-#   pivot_longer(n_conc:n_flux, names_to = "type_value",
-#                                  values_to = "n") %>% 
-#   ggplot()+
-#   geom_histogram(aes(x=n, fill= type),  color= NA)+
-#   scale_fill_manual(values = c("#3b4994", "#5ac8c8", "#b364ac"), name="")+
-#   scale_x_log10(breaks=c(1,5, 10, 50, 100))+
-#   theme_classic()+
-#   theme(legend.position=c(0.8, 0.8))
+#function to run at custom accuracies, from plyr package
+round_any = function(x, accuracy, f=round){f(x/ accuracy) * accuracy} 
+
+sites_lat <- sites_conc_flux %>% 
+  st_transform(4326) %>% 
+  filter(type != "none") %>% 
+  mutate(lat = st_coordinates(.)[, "Y"] %>% round(0),
+         type ="observations") %>% 
+  group_by(lat) %>% 
+  summarise(n=n(),
+            type=first(type)) %>% 
+  dplyr::select(type, lat, n) %>% 
+  st_drop_geometry()
+
+sites_lon <- sites_conc_flux %>% 
+  st_transform(4326) %>% 
+  filter(type != "none") %>% 
+  mutate(lon = st_coordinates(.)[, "X"] %>% round(0),
+         type ="observations") %>% 
+  group_by(lon = round_any(lon,1)) %>% 
+  summarise(n=n(),
+            type=first(type)) %>% 
+  dplyr::select(type, lon, n) %>% 
+  st_drop_geometry()
+
+
+world_gis_good <- st_is_valid(world_gis, reason = FALSE)
+
+lat_rivers <- 
+  world_gis[world_gis_good,] %>% 
+  mutate(start_point = st_startpoint(st_cast(., "MULTIPOINT")),
+         lat = st_coordinates(start_point)[,2] %>%  round(0) ) %>%
+  group_by(lat) %>% 
+  summarise(riv_area = sum(river_area_sub_ha)) %>% 
+  dplyr::select( lat,  riv_area) %>% 
+  st_drop_geometry()
+
+lon_rivers <- world_gis[world_gis_good,] %>% 
+  mutate(start_point = st_startpoint(st_cast(., "MULTIPOINT")),
+         lon = st_coordinates(start_point)[,1] %>%  round(0) ) %>% 
+  st_drop_geometry() %>%
+  group_by(lon= round_any(lon,1)) %>% 
+  summarise(riv_area = sum(river_area_sub_ha)) %>% 
+  dplyr::select( lon,  riv_area)
+
+
+
+together_lat <- lat_rivers %>% 
+  mutate(type="river area",
+         n=riv_area/max(riv_area)) %>% 
+  dplyr::select(type, lat, n) %>% 
+  bind_rows(sites_lat %>% 
+              mutate(n=n/max(n)) %>% 
+              dplyr::select(type, lat, n)) 
+
+
+
+together_lon <- lon_rivers %>% 
+  mutate(type="river area",
+         n=riv_area/max(riv_area)) %>% 
+  dplyr::select(type, lon, n) %>% 
+  bind_rows(sites_lon %>% 
+              mutate(n=n/max(n)) %>% 
+              dplyr::select(type,lon,  n)) 
+
+n_lats <- ggplot(together_lat, aes( x= lat, y=n, fill=type))+
+  geom_col(alpha=.5, position = "identity", width = 1)+
+  scale_fill_manual(  values = c("gray15",  "cadetblue3"))+
+  theme_classic()+
+  coord_flip()+
+  scale_x_continuous(expand=c(0,0), breaks = c(-50, 0, 50), name="", limits = c(-50, 85))+
+  scale_y_continuous( expand=c(0,0), name="")+
+  theme(legend.position = "none",
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.line  = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_rect(fill = "transparent", color="transparent"), # bg of the panel
+        plot.background = element_rect(fill = "transparent", color="transparent"))
+  
+n_lons <- ggplot(together_lon, aes( x= lon, y=n, fill=type))+
+  geom_col(alpha=.5, position = "identity", width = 1)+
+  scale_fill_manual(  values = c("gray15",  "cadetblue3"))+
+  theme_classic()+
+  scale_x_continuous(expand=c(0,0), breaks = c(-120, -60, 0, 60, 120), name="", limits=c(-170, 180))+
+  scale_y_continuous( expand=c(0,0), name="")+
+  theme(legend.position = "none",
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.line  = element_blank(),
+        axis.text.x=element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.x=element_blank(),
+        panel.background = element_rect(fill = "transparent", color="transparent"), # bg of the panel
+        plot.background = element_rect(fill = "transparent", color="transparent"))
+
+
+
+map_world + 
+  inset_element(n_lats, .93, .045, 1.01, .915 ) +
+  inset_element(n_lons, 0.012, .84, .94, 1.02)
+
+#ggarrange(map_world, n_lats, widths = c(8, 1), ncol = 2, align = "h")
+
+ggsave("man/figures/map_hist.png", scale=1, dpi = 400)
 
 hists_n <- 
   sites_conc_flux %>% 
+  st_drop_geometry() %>% 
   pivot_longer(n_conc:n_flux, names_to = "type_value",
                values_to = "n") %>%
   mutate(category = case_when(
