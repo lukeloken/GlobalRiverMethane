@@ -9,7 +9,7 @@ load(file.path(path_to_dropbox, "db_processingR",
 
 
 conc_ts <- conc_df %>%
-  filter(!is.na(CH4mean)) %>%
+  filter(!is.na(CH4mean) & CH4mean != -999999) %>%
   group_by(Site_Nid) %>%
   mutate(n_means = n(),
          Month = month(Date_start)) %>%
@@ -56,7 +56,7 @@ CH4conc_ts_bysite <- ggplot(conc_ts, aes(x = Date_start,
   labs(y = expression(paste(CH[4], " (", mu, "M)"))) +
   ggtitle(expression(paste(CH[4], " concentrations at 20+ timepoints (title = latitude)"))) +
   guides(color = guide_legend(nrow = 1)) +
-  theme(legend.position = c(0.95, -0.03),
+  theme(legend.position = c(0.98, -0.03),
         legend.justification = c(1, 0), 
         legend.title.align = 0.5, 
         legend.box = "horizontal")
@@ -84,7 +84,7 @@ CH4conc_ts_bysite_v2 <- ggplot(conc_ts, aes(x = Date2020,
   labs(y = expression(paste(CH[4], " (", mu, "M)"))) +
   ggtitle(expression(paste(CH[4], " concentrations at 20+ timepoints (title = latitude)"))) +
   guides(color = guide_legend(nrow = 1)) +
-  theme(legend.position = c(0.95, -0.03),
+  theme(legend.position = c(0.98, -0.03),
         legend.justification = c(1, 0), 
         legend.title.align = 0.5, 
         legend.box = "horizontal") +
@@ -173,8 +173,8 @@ conc_f <- conc_df %>%
                                                "-15 to 0", "0 to 15",
                                                "15 to 30", "30 to 45",
                                                "45 to 60", "60+")), 
-         Month = month(SampleDatestart),
-         Date2020 = as.Date(paste0("2020-", month(SampleDatestart), "-", day(SampleDatestart)))) %>%
+         Month = month(Date_start),
+         Date2020 = as.Date(paste0("2020-", month(Date_start), "-", day(Date_start)))) %>%
   group_by(Latitude_bin, Date2020) %>%
   summarize(n_obs = n())
 

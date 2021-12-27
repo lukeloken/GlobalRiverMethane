@@ -50,7 +50,7 @@ highN2O <- filter(conc_df, N2Omean != -999999,
                   # orig_N2Ounit %in% c("mgN/L", "nmol/L", "umol/L"), 
                   N2Omean > 5)
 
-lowN2O <- filter(conc_df, N2Omean != -999999
+lowN2O <- filter(conc_df, N2Omean != -999999,
                  # orig_N2Ounit %in% c("mgN/L", "nmol/L", "umol/L"), 
                  N2Omean < .001)
 
@@ -194,8 +194,8 @@ ggplot(CO2_flux_df, aes(x = CO2_Flux_unit, y = CO2_Flux_Mean)) +
   # geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1) + 
   # scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
   theme_bw() + 
-  scale_color_manual(values = c(brewer.pal(length(unique(CO2_flux_df$Publication_Nid)) - 1, 
-                                           "Paired"), "lightgrey")) +
+  # scale_color_manual(values = c(brewer.pal(length(unique(CO2_flux_df$Publication_Nid)) - 1, 
+                                           # "Paired"), "lightgrey")) +
   coord_flip()
 
 #N2O flux
@@ -324,3 +324,4 @@ ggplot(flux_df) +
 ggplot(flux_df) +
   geom_histogram(aes(x = N2O_Flux_Mean)) +
   scale_x_log10()
+

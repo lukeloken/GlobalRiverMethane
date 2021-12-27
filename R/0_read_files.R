@@ -15,11 +15,31 @@ unit_convert_table <- readRDS("R/unit_convert_table.rds")
                            "methdb_explore", "data", 
                            "methdb_gis.csv")) 
 
+ gis_df2 <- gis_df %>%
+   group_by(Site_Nid) %>%
+   summarize(across(everything(), ~.x[1]))
+ 
+dub_sites <- which(table(gis_df$Site_Nid)>1)
+filter(gis_df, Site_Nid %in% names(dub_sites))
+
+which(table(gis_df2$Site_Nid)>1)
+
+setdiff(unique(gis_df2$Site_Nid), unique(gis_df$Site_Nid))
+setdiff(unique(gis_df$Site_Nid), unique(gis_df2$Site_Nid))
+
+gis_df
+
 #load methdb papers table
 papers_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
-                    sheet = "Papers",  guess_max = 250)  %>% 
+                    sheet = "Papers",  guess_max = 250) 
+
+last_row = which(papers_df$Title == "DELETED/REJECTED") - 1
+
+papers_df <- papers_df %>%
+  slice(1:last_row) %>%
   drop_na(Publication_Nid) %>%
   select_if(~sum(!is.na(.)) > 0)
+
 
 #rename columns
 names(papers_df) <- gsub(" ", "", names(papers_df))
@@ -29,9 +49,9 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
   rename(Elevation_m = Elevation_m_reported) %>%
-  left_join(gis_df %>% 
-              select(Site_Nid, lat_new, lon_new, 
-                     dist_m_to_old_site, elevation_m_new = z_m_combined, 
+  left_join(gis_df2 %>% 
+              select(Site_Nid, lat_new = lat, lon_new = lon, 
+                     elevation_m_new = z_m_combined, 
                      subcatch_area_km, catch_area_km, slope_m_m) %>%
               distinct(),
             by = "Site_Nid") %>%
@@ -101,7 +121,8 @@ summary(select(concentrations, contains("Date")))
 
 #load methdb fluxes
 fluxes <- read_excel(file.path(path_to_dropbox, MethDB_filename), 
-                     sheet = "MethDB_2_flux", guess_max = 4000)
+                     sheet = "MethDB_2_flux", guess_max = 4000) %>%
+  mutate(Site_Nid = as.character(Site_Nid))
 
 #Change names of dates, seasons, and counts
 names(fluxes)[grepl("Date", names(fluxes))] <- c("Date_start", "Date_end")
@@ -142,64 +163,108 @@ concs_without_mean_ch4 <- concentrations %>%
 #  count(CH4unit) %>% 
 #  print(n=50)
 
+#Are all conc and flux sites in the sites table?
+setdiff(concentrations$Site_Nid, sites_df$Site_Nid)
+setdiff(fluxes$Site_Nid, sites_df$Site_Nid)
+
+#Vice versa. But know that some sites should not be in the conc/flux datasets
+# setdiff(sites_df$Site_Nid, concentrations$Site_Nid)
+# setdiff(sites_df$Site_Nid, fluxes$Site_Nid)
+
 
 #Convert concentration and fluxes to uM and mmol m-2 d-1
 
 conc_df <- convert_conc_units(concentrations, unit_convert_table)
 flux_df <- convert_flux_units(fluxes, unit_convert_table)
 
+
 save(conc_df, flux_df, 
      sites_df, papers_df, gis_df,
      file = file.path(path_to_dropbox, "db_processingR", 
                       "MethDB_tables_converted.rda"))
 
+#Observations missing siteID
+conc_missing_SiteNID <- filter(conc_df, Site_Nid %in% setdiff(conc_df$Site_Nid, sites_df$Site_Nid)) 
+flux_missing_SiteNID <- filter(flux_df, Site_Nid %in% setdiff(flux_df$Site_Nid, sites_df$Site_Nid)) 
+
+write.csv(conc_missing_SiteNID, file.path(path_to_dropbox, "db_processingR",
+                                         "Conc_missing_SiteNid.csv"), row.names = FALSE)
+
+write.csv(flux_missing_SiteNID, file.path(path_to_dropbox, "db_processingR",
+                                          "Flux_missing_SiteNid.csv"), row.names = FALSE)
+
+
 # load(file.path(path_to_dropbox, "db_processingR", 
 #                "MethDB_tables_converted.rda"))
 
-#Quick plots of distributions
-ggplot(conc_df) +
-  geom_histogram(aes(x = CH4mean)) +
-  scale_x_log10()
 
-ggplot(conc_df) +
-  geom_histogram(aes(x = CO2mean)) +
-  scale_x_log10()
 
-ggplot(conc_df) +
-  geom_histogram(aes(x = N2Omean)) +
-  scale_x_log10()
+#output files for Yale and database
+papers_out <- papers_df
 
-ggplot(conc_df) +
-  geom_histogram(aes(x = CH4min)) +
-  scale_x_log10()
+sites_out <- sites_df %>%
+  select(-`Basin/Region`, -Country, -Continent,
+         -Land_use, -System_size, -Depth_m, 
+         -Width_m, -`avgQ_m3/s`) %>%
+  filter(!grepl("DIT", Channel_type), 
+         !grepl("CAN", Channel_type), 
+         !grepl("DD", Channel_type))
 
-ggplot(conc_df) +
-  geom_histogram(aes(x = CH4max)) +
-  scale_x_log10()
+conc_out <- conc_df %>%
+  left_join(select(sites_df, Site_Nid, Channel_type)) %>%
+  filter(Aggregated_Space != "Yes", 
+         !grepl("DIT", Channel_type), 
+         !grepl("CAN", Channel_type), 
+         !grepl("DD", Channel_type)) %>%
+  select(-Season, -CO2measurementtype, -FluxYesNo, -Channel_type)
 
-ggplot(conc_df) +
-  geom_histogram(aes(x = CH4median)) +
-  scale_x_log10()
 
-ggplot(flux_df) +
-  geom_histogram(aes(x = Diffusive_CH4_Flux_Mean)) +
-  scale_x_log10()
+flux_out <- flux_df %>%
+  left_join(select(sites_df, Site_Nid, Channel_type)) %>%
+  filter(Aggregated_Space != "Yes", 
+         !grepl("DIT", Channel_type), 
+         !grepl("CAN", Channel_type), 
+         !grepl("DD", Channel_type)) %>%
+  select(-Season, -Channel_type)
 
-ggplot(flux_df) +
-  geom_histogram(aes(x = Eb_CH4_Flux_Mean)) +
-  scale_x_log10()
+setdiff(concentrations$Site_Nid, sites_df$Site_Nid)
+setdiff(conc_out$Site_Nid, sites_out$Site_Nid)
 
-ggplot(flux_df) +
-  geom_histogram(aes(x = Total_CH4_Flux_Mean)) +
-  scale_x_log10()
+setdiff(fluxes$Site_Nid, sites_df$Site_Nid)
+setdiff(flux_out$Site_Nid, sites_out$Site_Nid)
 
-ggplot(flux_df) +
-  geom_histogram(aes(x = CO2_Flux_Mean)) +
-  scale_x_log10()
+conc_out_missing_SiteID <- filter(conc_out, Site_Nid %in% setdiff(conc_out$Site_Nid, sites_out$Site_Nid)) 
+flux_out_missing_siteID <- filter(flux_out, Site_Nid %in% setdiff(flux_out$Site_Nid, sites_out$Site_Nid)) 
 
-ggplot(flux_df) +
-  geom_histogram(aes(x = N2O_Flux_Mean)) +
-  scale_x_log10()
+
+sites_out %>% data.frame() %>% head()
+conc_out %>% data.frame() %>% head()
+flux_out %>% data.frame() %>% head()
+
+
+save(papers_out, sites_out, conc_out, 
+     file = file.path(path_to_dropbox, "db_processingR", 
+                      paste0("GRiMe_tables_converted_Yale_", Sys.Date(), ".rda")))
+
+save(papers_out, sites_out, conc_out, flux_out,
+     file = file.path(path_to_dropbox, "db_processingR", 
+                      paste0("GRiMe_tables_converted_Internal_", Sys.Date(), ".rda")))
+
+write.csv(papers_out, file.path(path_to_dropbox, "db_processingR", 
+                                paste0("GRiMe_papers_", Sys.Date(), ".csv")), 
+          row.names = FALSE)
+
+write.csv(sites_out, file.path(path_to_dropbox, "db_processingR", 
+                                paste0("GRiMe_sites_", Sys.Date(), ".csv")), 
+          row.names = FALSE)
+
+write.csv(conc_out, file.path(path_to_dropbox, "db_processingR", 
+                               paste0("GRiMe_concentrations_", Sys.Date(), ".csv")), 
+          row.names = FALSE)
+
+write.csv(flux_out, file.path(path_to_dropbox, "db_processingR", 
+                              paste0("GRiMe_fluxes_", Sys.Date(), ".csv")), 
+          row.names = FALSE)
 
 
 # End
