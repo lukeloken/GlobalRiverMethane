@@ -158,21 +158,27 @@ ggsave(file.path(path_to_dropbox, "Figures", "Timeseries", "CH4conc_Q.png"),
 conc_f <- conc_df %>%
   filter(!is.na(CH4mean)) %>%
   left_join(select(sites_df, Site_Nid, Latitude)) %>%
-  mutate(Latitude_bin = case_when(Latitude >= 60 ~ "60+",
-                                  Latitude < 60 & Latitude >= 45 ~ "45 to 60", 
-                                  Latitude < 45 & Latitude >= 30 ~ "30 to 45", 
-                                  Latitude < 30 & Latitude >= 15 ~ "15 to 30", 
-                                  Latitude < 15 & Latitude >= 0 ~ "0 to 15", 
-                                  Latitude < 0 & Latitude >= -15 ~ "-15 to 0", 
-                                  Latitude < -15 & Latitude >= -30 ~ "-30 to -15", 
-                                  Latitude < -30 & Latitude >= -45 ~ "-45 to -30", 
-                                  Latitude < -45 & Latitude >= -60 ~ "-60 to -45", 
-                                  Latitude < -60 & Latitude >= 45 ~ "-60-" )) %>%
-  mutate(Latitude_bin = factor(Latitude_bin, c("-60-", "-60 to -45", 
-                                               "-45 to -30", "-30 to -15",
-                                               "-15 to 0", "0 to 15",
-                                               "15 to 30", "30 to 45",
-                                               "45 to 60", "60+")), 
+  mutate(Latitude_bin = case_when(Latitude >= 70 ~ "> 70",
+                                  Latitude < 70 & Latitude >= 60 ~ "60 to 70", 
+                                  Latitude < 60 & Latitude >= 50 ~ "50 to 60", 
+                                  Latitude < 50 & Latitude >= 40 ~ "40 to 50", 
+                                  Latitude < 40 & Latitude >= 30 ~ "30 to 40", 
+                                  Latitude < 30 & Latitude >= 20 ~ "20 to 30", 
+                                  Latitude < 20 & Latitude >= 10 ~ "10 to 20", 
+                                  Latitude < 10 & Latitude >= 0 ~ "0 to 10", 
+                                  Latitude < 0 & Latitude >= -10 ~ "-10 to 0", 
+                                  Latitude < -10 & Latitude >= -20 ~ "-20 to -10", 
+                                  Latitude < -20 & Latitude >= -30 ~ "-30 to -20", 
+                                  Latitude < -30 & Latitude >= -40 ~ "-40 to -30", 
+                                  Latitude < -40 & Latitude >= -50 ~ "-50 to -40", 
+                                  Latitude < -50 ~ "< -50" )) %>%
+  mutate(Latitude_bin = factor(Latitude_bin, c("< -50", "-50 to -40", 
+                                               "-40 to -30", "-30 to -20",
+                                               "-20 to -10", "-10 to 0",
+                                               "0 to 10", "10 to 20",
+                                               "20 to 30", "30 to 40",
+                                               "40 to 50", "50 to 60",
+                                               "60 to 70", "> 70")), 
          Month = month(Date_start),
          Date2020 = as.Date(paste0("2020-", month(Date_start), "-", day(Date_start)))) %>%
   group_by(Latitude_bin, Date2020) %>%
@@ -184,21 +190,27 @@ conc_f <- conc_df %>%
 flux_f <- flux_df %>%
   filter(!is.na(Diffusive_CH4_Flux_Mean)) %>%
   left_join(select(sites_df, Site_Nid, Latitude)) %>%
-  mutate(Latitude_bin = case_when(Latitude >= 60 ~ "60+",
-                                  Latitude < 60 & Latitude >= 45 ~ "45 to 60", 
-                                  Latitude < 45 & Latitude >= 30 ~ "30 to 45", 
-                                  Latitude < 30 & Latitude >= 15 ~ "15 to 30", 
-                                  Latitude < 15 & Latitude >= 0 ~ "0 to 15", 
-                                  Latitude < 0 & Latitude >= -15 ~ "-15 to 0", 
-                                  Latitude < -15 & Latitude >= -30 ~ "-30 to -15", 
-                                  Latitude < -30 & Latitude >= -45 ~ "-45 to -30", 
-                                  Latitude < -45 & Latitude >= -60 ~ "-60 to -45", 
-                                  Latitude < -60 & Latitude >= 45 ~ "-60-" )) %>%
-  mutate(Latitude_bin = factor(Latitude_bin, c("-60-", "-60 to -45", 
-                                               "-45 to -30", "-30 to -15",
-                                               "-15 to 0", "0 to 15",
-                                               "15 to 30", "30 to 45",
-                                               "45 to 60", "60+")), 
+  mutate(Latitude_bin = case_when(Latitude >= 70 ~ "> 70",
+                                  Latitude < 70 & Latitude >= 60 ~ "60 to 70", 
+                                  Latitude < 60 & Latitude >= 50 ~ "50 to 60", 
+                                  Latitude < 50 & Latitude >= 40 ~ "40 to 50", 
+                                  Latitude < 40 & Latitude >= 30 ~ "30 to 40", 
+                                  Latitude < 30 & Latitude >= 20 ~ "20 to 30", 
+                                  Latitude < 20 & Latitude >= 10 ~ "10 to 20", 
+                                  Latitude < 10 & Latitude >= 0 ~ "0 to 10", 
+                                  Latitude < 0 & Latitude >= -10 ~ "-10 to 0", 
+                                  Latitude < -10 & Latitude >= -20 ~ "-20 to -10", 
+                                  Latitude < -20 & Latitude >= -30 ~ "-30 to -20", 
+                                  Latitude < -30 & Latitude >= -40 ~ "-40 to -30", 
+                                  Latitude < -40 & Latitude >= -50 ~ "-50 to -40", 
+                                  Latitude < -50 ~ "< -50" )) %>%
+  mutate(Latitude_bin = factor(Latitude_bin, c("< -50", "-50 to -40", 
+                                               "-40 to -30", "-30 to -20",
+                                               "-20 to -10", "-10 to 0",
+                                               "0 to 10", "10 to 20",
+                                               "20 to 30", "30 to 40",
+                                               "40 to 50", "50 to 60",
+                                               "60 to 70", "> 70")), 
          Month = month(Date_start),
          Date2020 = as.Date(paste0("2020-", month(Date_start), "-", day(Date_start)))) %>%
   group_by(Latitude_bin, Date2020) %>%
@@ -316,13 +328,14 @@ both_f_month <- flux_f_month %>%
 
 both_f_plot2 <- ggplot(filter(both_f_month, !is.na(Latitude_bin))) +
   theme_bw() + 
+  theme_grime() + 
   geom_col(aes(y = as.numeric(n_obs), x = month_abb, fill = type), 
            color = "grey10") +
-  scale_fill_manual(values = c("darkgoldenrod2", "steelblue3")) + 
+  # scale_fill_manual(values = c("darkgoldenrod2", "steelblue3")) + 
   scale_y_sqrt(expand = expansion(mult = c(0,.1))) +
   facet_grid(rows = vars(Latitude_bin_flip), 
              cols = vars(type),
-             drop = FALSE) + 
+             drop = TRUE) + 
   labs(y = expression(paste("Number of observations")),
        x = "Month", 
        title = expression(paste("Number of observations by month and latitude (", degree, ")"))) +
