@@ -48,7 +48,7 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 #load methdb site table
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
-  rename(Elevation_m = Elevation_m_reported) %>%
+  # rename(Elevation_m = Elevation_m_reported) %>%
   left_join(gis_df2 %>% 
               select(Site_Nid, lat_new = lat, lon_new = lon, 
                      elevation_m_new = z_m_combined, 
