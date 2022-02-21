@@ -117,6 +117,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   missing_units <- missing_units[!grepl("ppm", missing_units)]
   missing_units <- missing_units[!grepl("uatm", missing_units)]
   missing_units <- missing_units[!grepl("ppb", missing_units)]
+  missing_units <- missing_units[!grepl("%sat", missing_units)]
   missing_units <- missing_units[!is.na(missing_units)]
   
   if( length(missing_units > 0)) {
@@ -148,59 +149,72 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   
   concentrations_out <- concentrations_out %>%
     mutate(kh = getKh(WaterTempUsed + 273.15, "CH4"), 
+           sat_CH4 = getSaturation(kh, AtmP = Pressure, gas = "CH4"),
            factor = case_when(CH4unit == "ppm CH4" ~ kh/Pressure,
                               CH4unit == "ppb CH4" ~ kh/Pressure/1000,
                               CH4unit == "uatm CH4" ~ kh, 
-                              !CH4unit %in% c("ppm CH4", "ppb CH4", "uatm CH4") ~ 1), 
+                              CH4unit == "%sat_CH4" ~ sat_CH4/100, #Need to confirm this!!
+                              !CH4unit %in% c("ppm CH4", "ppb CH4", "uatm CH4", "%sat_CH4")
+                              ~ 1), 
            across(c("CH4min", 
                     "CH4max", 
                     "CH4mean",
                     "CH4_SD",
                     "CH4median"),
                   ~suppressWarnings(as.numeric(.x))*factor)) %>%
-    mutate(new_CH4unit = ifelse(CH4unit %in% c("ppm CH4", "ppb CH4", "uatm CH4"),
+    mutate(new_CH4unit = ifelse(CH4unit %in% c("ppm CH4", "ppb CH4", 
+                                               "uatm CH4", "%sat_CH4"),
                                 "umol/L", 
                                 NA)) %>%
     rename(orig_CH4unit = CH4unit) %>%
-    select(-factor, -kh)
+    select(-factor, -kh, -sat_CH4)
   
   concentrations_out <- concentrations_out %>%
     mutate(kh = getKh(WaterTempUsed + 273.15, "CO2"), 
+           sat_CO2 = getSaturation(kh, AtmP = Pressure, gas = "CO2"),
            factor = case_when(CO2units == "ppm CO2" ~ kh/Pressure,
                               CO2units == "ppb CO2" ~ kh/Pressure/1000,
                               CO2units == "uatm CO2" ~ kh, 
-                              !CO2units %in% c("ppm CO2", "ppb CO2", "uatm CO2") ~ 1),  
+                              CO2units == "%sat_CO2" ~ sat_CO2/100, #Need to confirm this!!
+                              !CO2units %in% c("ppm CO2", "ppb CO2", 
+                                               "uatm CO2", "%sat_CO2") ~ 1),  
            across(c("CO2min", 
                     "CO2max", 
                     "CO2mean",
                     "CO2_SD",
                     "CO2median"),
                   ~suppressWarnings(as.numeric(.x))*factor))  %>%
-    mutate(new_CO2unit = ifelse(CO2units %in% c("ppm CO2", "ppb CO2", "uatm CO2"),
+    mutate(new_CO2unit = ifelse(CO2units %in% c("ppm CO2", "ppb CO2", 
+                                                "uatm CO2", "%sat_CO2"),
                                 "umol/L", 
                                 NA)) %>%
     rename(orig_CO2unit = CO2units) %>%
-    select(-factor, -kh)
+    select(-factor, -kh, -sat_CO2)
   
   
   concentrations_out <- concentrations_out %>%
     # filter(N2Ounits %in% c("ppm N2O", "ppb N2O", "uatm N2O")) %>%
     mutate(kh = getKh(WaterTempUsed + 273.15, "N2O"), 
+           sat_N2O = getSaturation(kh, AtmP = Pressure, gas = "CO2"),
            factor = case_when(N2Ounits == "ppm N2O" ~ kh/Pressure,
                               N2Ounits == "ppb N2O" ~ kh/Pressure/1000,
                               N2Ounits == "uatm N2O" ~ kh, 
-                              !N2Ounits %in% c("ppm N2O", "ppb N2O", "uatm N2O") ~ 1),  
+                              N2Ounits == "%sat_N2O" ~ sat_N2O/100, #Need to confirm this!!
+                              !N2Ounits %in% c("ppm N2O", "ppb N2O", 
+                                               "uatm N2O", "%sat_N2O") ~ 1),  
            across(c("N2Omin", 
                     "N2Omax", 
                     "N2Omean",
                     "N2O_SD",
                     "N2Omedian"),
                   ~suppressWarnings(as.numeric(.x))*factor)) %>%
-    mutate(new_N2Ounit = ifelse(N2Ounits %in% c("ppm N2O", "ppb N2O", "uatm N2O"),
+    mutate(new_N2Ounit = ifelse(N2Ounits %in% c("ppm N2O", "ppb N2O", 
+                                                "uatm N2O", "%sat_N2O"),
                                 "umol/L", 
                                 NA)) %>%
     rename(orig_N2Ounit = N2Ounits) %>%
-    select(-factor, -kh, -Pressure, -WaterTempUsed, 
+    select(-factor, -kh, -sat_CO2,
+           -Pressure, -WaterTempUsed, 
            -Elevation_m, -elevation_m_new, -ElevationUsed)
   
   
