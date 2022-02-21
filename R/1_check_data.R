@@ -9,6 +9,10 @@ load(file.path(path_to_dropbox, "db_processingR",
 
 summary(conc_df$CH4mean)
 
+plot(filter(conc_df, orig_CH4unit == "%sat_CH4")$CH4mean)
+plot(filter(conc_df, orig_CO2unit == "%sat_CO2")$CO2mean)
+plot(filter(conc_df, orig_N2Ounit == "%sat_N2O")$N2Omean)
+
 
 ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) + 
   geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
