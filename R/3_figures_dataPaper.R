@@ -40,11 +40,13 @@ sites_conc_flux <-sites_df %>%
               group_by(Site_Nid) %>% 
               summarise(n_flux= n()), by= "Site_Nid"  ) %>% 
   mutate(
+    n_conc = replace_na(n_conc, 0),
+    n_flux = replace_na(n_flux, 0),
     type = case_when(
-    is.na(n_conc) == FALSE & is.na(n_flux) == FALSE ~ "both",
-    is.na(n_conc) == TRUE & is.na(n_flux) == FALSE ~ "only flux",
-    is.na(n_conc) == FALSE & is.na(n_flux) == TRUE ~ "only concentrations",
-    is.na(n_conc) == TRUE & is.na(n_flux) == TRUE ~ "none"),
+      n_conc > 0 & n_flux > 0 ~ "both",
+      n_conc < 1 & n_flux > 0 ~ "only flux",
+      n_conc > 0 & n_flux < 1 ~ "only concentrations",
+      n_conc < 1 & n_flux < 1 ~ "none"),
     type = fct_relevel(type, "both", "only flux", "only concentrations", "none" )
   ) %>%
   st_as_sf( coords = c("Longitude", "Latitude"),  crs = 4326) %>%
@@ -228,9 +230,10 @@ map_world +
 
 ggsave("man/figures/map_hist.png", scale=1, dpi = 400)
 
-hists_n <- 
+#hists_n <- 
   sites_conc_flux %>% 
   st_drop_geometry() %>% 
+    filter(!type == "none") %>% 
   pivot_longer(n_conc:n_flux, names_to = "type_value",
                values_to = "n") %>%
   mutate(category = case_when(
@@ -248,9 +251,7 @@ hists_n <-
   geom_col(aes(x = category, y=n, fill= type),  color= NA, position = "dodge")+
   scale_fill_manual(values = c("#3b4994", "#b364ac", "#5ac8c8"), name="")+
   theme_classic()+
-  labs( x= "number of observations", y= "number of sites")+
-  theme(legend.position=c(0.34, 1.4),
-        legend.text = element_text(size=14))
+  labs( x= "number of observations", y= "number of sites")
 
 
 # Plot for the time series of observations. 
