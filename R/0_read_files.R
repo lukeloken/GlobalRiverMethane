@@ -13,7 +13,9 @@ unit_convert_table <- readRDS("R/unit_convert_table.rds")
 #load GIS data
 gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
                            "methdb_explore", "data", 
-                           "methdb_gis.csv")) 
+                           "methdb_gis.csv"))  %>%
+  mutate(Site_Nid = as.character(Site_Nid))
+
 
 gis_df2 <- gis_df %>%
    group_by(Site_Nid) %>%
@@ -27,7 +29,8 @@ which(table(gis_df2$Site_Nid)>1)
 setdiff(unique(gis_df2$Site_Nid), unique(gis_df$Site_Nid))
 setdiff(unique(gis_df$Site_Nid), unique(gis_df2$Site_Nid))
 
-gis_df
+dim(gis_df)
+dim(gis_df2)
 
 #load methdb papers table
 papers_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
@@ -49,14 +52,13 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
   # rename(Elevation_m = Elevation_m_reported) %>%
-  left_join(gis_df2 %>% 
+  mutate(Site_Nid = as.character(Site_Nid)) %>%
+  left_join(gis_df %>% 
               select(Site_Nid, lat_new = lat, lon_new = lon, 
                      elevation_m_new = z_m_combined, 
                      subcatch_area_km, catch_area_km, slope_m_m) %>%
               distinct(),
-            by = "Site_Nid") %>%
-  mutate(Site_Nid = as.character(Site_Nid))
-  
+            by = "Site_Nid")
 # 
 # dup_sites <- table(sites_df$Site_Nid)
 # dup_sites <- names(dup_sites[which(dup_sites>1)])
