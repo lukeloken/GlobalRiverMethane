@@ -11,11 +11,11 @@ source("R/convert_unit_functions.R")
 unit_convert_table <- readRDS("R/unit_convert_table.rds")
 
 #load GIS data
- gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
+gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
                            "methdb_explore", "data", 
                            "methdb_gis.csv")) 
 
- gis_df2 <- gis_df %>%
+gis_df2 <- gis_df %>%
    group_by(Site_Nid) %>%
    summarize(across(everything(), ~.x[1]))
  
@@ -78,7 +78,8 @@ concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                              sheet = "MethDB_2_conc", guess_max = 20000) %>% 
   mutate(Site_Nid = as.character(Site_Nid),
          across(contains("Date_"), ~as.Date(.x))) %>%
-  left_join(select(sites_df, Site_Nid, Elevation_m, elevation_m_new)) %>%
+  left_join(select(sites_df, Site_Nid, Elevation_m)) %>%
+  left_join(select(gis_df, Site_Nid, elevation_m_new = z_m_combined)) %>% 
   filter(!is.na(Publication_Nid) & !is.na(Site_Nid))
 
 

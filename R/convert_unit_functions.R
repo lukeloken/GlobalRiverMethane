@@ -213,7 +213,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
                                 "umol/L", 
                                 NA)) %>%
     rename(orig_N2Ounit = N2Ounits) %>%
-    select(-factor, -kh, -sat_CO2,
+    select(-factor, -kh, #-sat_CO2, #this one is removed in the block above
            -Pressure, -WaterTempUsed, 
            -Elevation_m, -elevation_m_new, -ElevationUsed)
   
