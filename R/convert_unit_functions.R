@@ -195,7 +195,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   concentrations_out <- concentrations_out %>%
     # filter(N2Ounits %in% c("ppm N2O", "ppb N2O", "uatm N2O")) %>%
     mutate(kh = getKh(WaterTempUsed + 273.15, "N2O"), 
-           sat_N2O = getSaturation(kh, AtmP = Pressure, gas = "CO2"),
+           sat_N2O = getSaturation(kh, AtmP = Pressure, gas = "N2O"),
            factor = case_when(N2Ounits == "ppm N2O" ~ kh/Pressure,
                               N2Ounits == "ppb N2O" ~ kh/Pressure/1000,
                               N2Ounits == "uatm N2O" ~ kh, 
