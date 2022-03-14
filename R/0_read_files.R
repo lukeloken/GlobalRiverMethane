@@ -52,7 +52,8 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
   # rename(Elevation_m = Elevation_m_reported) %>%
-  mutate(Site_Nid = as.character(Site_Nid)) %>%
+  mutate(Site_Nid = as.character(Site_Nid), 
+         Elevation_m = as.numeric(Elevation_m)) %>%
   left_join(gis_df %>% 
               select(Site_Nid, lat_new = lat, lon_new = lon, 
                      elevation_m_new = z_m_combined, 
@@ -180,6 +181,7 @@ setdiff(fluxes$Site_Nid, sites_df$Site_Nid)
 conc_df <- convert_conc_units(concentrations, unit_convert_table)
 flux_df <- convert_flux_units(fluxes, unit_convert_table)
 
+# filter(conc_df, is.na(CH4mean) & orig_CH4unit == "ppm CH4") 
 
 save(conc_df, flux_df, 
      sites_df, papers_df, gis_df,
