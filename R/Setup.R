@@ -41,9 +41,45 @@ if (MethDB_filename %in% list.files(path_to_dropbox)){
 load(file.path(path_to_dropbox, "db_processingR", 
                "MethDB_tables_converted.rda"))
 
+# theme_grime <- function(){
+#   list(
+#     scale_color_manual(values = c("darkgoldenrod2",  "steelblue3", "olivedrab3")), 
+#     scale_fill_manual(values = c("darkgoldenrod2", "steelblue3", "olivedrab3"))
+#   ) 
+# }
+
 theme_grime <- function(){
   list(
-    scale_color_manual(values = c("darkgoldenrod2",  "steelblue3", "olivedrab3")), 
-    scale_fill_manual(values = c("darkgoldenrod2", "steelblue3", "olivedrab3"))
+    scale_color_manual(values = c("#ff9f1c",  "#936639", "#a4ac86")), 
+    scale_fill_manual(values = c("#ff9f1c", "#936639", "#a4ac86"))
   ) 
 }
+
+#Test code for theme grime
+library(egg)
+library(ggplot2)
+
+x = runif(1000, 0, 40)
+a = sample(1:3, 1000, replace = TRUE)
+type = as.factor(a)
+levels(type) <- c("conc", "both", "flux")
+y =  rnorm(1000, 1, .5)*a+x + runif(1000, 0, 3)*x + rnorm(1000, 0, 2)
+df_test <- data.frame(x, a, type, y)
+
+p2 <- ggplot(df_test) +
+  geom_boxplot(aes(x = type, y = x, fill = type, group = type)) +
+  theme_bw() + 
+  theme_grime()
+
+p1 <- ggplot(df_test, aes(x = x, y = y)) +
+  geom_point(aes(color = type)) +
+  geom_smooth(aes(color = type), method = "lm", se = FALSE, size = 2) + 
+  theme_bw() +
+  theme_grime()
+
+p3 <- p1 + theme_dark()
+p4 <- p2 + theme_dark()
+
+
+
+egg::ggarrange(plots = list(p1, p2, p3, p4))
