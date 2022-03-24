@@ -59,27 +59,28 @@ theme_grime <- function(){
 library(egg)
 library(ggplot2)
 
-x = runif(1000, 0, 40)
-a = sample(1:3, 1000, replace = TRUE)
+x = runif(100, 0, 40)
+a = sample(0:2, 100, replace = TRUE)
 type = as.factor(a)
 levels(type) <- c("conc", "both", "flux")
-y =  rnorm(1000, 1, .5)*a+x + runif(1000, 0, 3)*x + rnorm(1000, 0, 2)
+y =  a*20 + x + rnorm(100, 0, 15)
 df_test <- data.frame(x, a, type, y)
 
 p2 <- ggplot(df_test) +
-  geom_boxplot(aes(x = type, y = x, fill = type, group = type)) +
+  geom_boxplot(aes(x = type, y = y, fill = type, group = type)) +
   theme_bw() + 
   theme_grime()
 
 p1 <- ggplot(df_test, aes(x = x, y = y)) +
-  geom_point(aes(color = type)) +
+  geom_point(aes(color = type), alpha = 0.3) +
   geom_smooth(aes(color = type), method = "lm", se = FALSE, size = 2) + 
   theme_bw() +
   theme_grime()
 
 p3 <- p1 + theme_dark()
 p4 <- p2 + theme_dark()
+p5 <- p1 + geom_point(aes(color = type), alpha = 1) 
+p6 <- p3 + geom_point(aes(color = type), alpha = 1) 
 
+egg::ggarrange(plots = list(p1, p5, p2, p3, p6, p4), byrow = FALSE)
 
-
-egg::ggarrange(plots = list(p1, p2, p3, p4))
