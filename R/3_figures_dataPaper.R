@@ -460,13 +460,13 @@ repr_hexes_avg <- repr_hexes %>%
 
  
 ggplot() +
-  geom_sf(data = repr_hexes_avg %>% filter(repr > .8), color = NA, aes(fill = repr))+
-  geom_sf(data = rivers50 %>% filter(scalerank < 8), color= "steelblue4")+
+  geom_sf(data = repr_hexes_avg, color = NA, aes(fill = repr))+
+  geom_sf(data = rivers50 %>% filter(scalerank < 8), color= "steelblue4", size = .3)+
   geom_sf(data=lakes %>% filter(scalerank < 1), fill="aliceblue", color=NA)+
-  scale_fill_viridis_c(
-    option = "inferno", na.value = "gray", name = "Representativeness")+
+  scale_fill_distiller(type = "seq", direction = -1, palette = "Oranges", na.value = "gray",
+     name = "Representativeness")+
   coord_sf(xlim = c(-15000000, 16000000), ylim = c(-8600000, 8600000), expand = FALSE) +
-  guides( fill = guide_colourbar(title.position = "top"))+
+  guides(fill = guide_colourbar(title.position = "top"))+
   theme_void()+
   theme(legend.position = "top",
         legend.direction = "horizontal",
