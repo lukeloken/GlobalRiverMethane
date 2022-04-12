@@ -133,12 +133,12 @@ convert_conc_units <- function(concentrations, unit_convert_table){
     mutate(WaterTempUsed = ifelse(is.finite(as.numeric(WaterTemp_actual)), 
                                   as.numeric(WaterTemp_actual),
                                   ifelse(is.finite(WaterTemp_est), 
-                                         WaterTemp_est, 
+                                         as.numeric(WaterTemp_est), 
                                          NA)), 
            ElevationUsed = ifelse(is.finite(as.numeric(Elevation_m)), 
                                   as.numeric(Elevation_m),
                                   ifelse(is.finite(elevation_m_new), 
-                                         elevation_m_new, 
+                                         as.numeric(elevation_m_new), 
                                          NA)),
            Pressure = estimate_pressure(ElevationUsed))
   
