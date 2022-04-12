@@ -260,12 +260,15 @@ flux_f_month <- flux_f %>%
   group_by(Latitude_bin, month) %>%
   summarize(n_obs = sum(n_obs)) %>%
   mutate(month_abb = factor(month.abb[as.numeric(month)], month.abb[1:12]), 
-         Latitude_bin_flip = factor(Latitude_bin, rev(levels(Latitude_bin))))
+         Latitude_bin_flip = factor(Latitude_bin, rev(levels(Latitude_bin))), 
+         type = factor("Flux", levels = c("Concentration", "Both", "Flux")))
 
 flux_f_plot2 <- ggplot(filter(flux_f_month, !is.na(Latitude_bin))) +
   theme_bw() + 
-  geom_col(aes(y = n_obs, x = month_abb), 
-           fill = "steelblue3", color = "grey10") +
+  theme_grime() + 
+  geom_col(aes(y = n_obs, x = month_abb, fill = type), 
+           # fill = "steelblue3", 
+           color = "grey10") +
   facet_grid(rows = vars(Latitude_bin_flip), drop = FALSE) + 
   scale_y_sqrt(expand = expansion(mult = c(0,.1))) +
   labs(y = expression(paste("Number of ", CH[4], " flux observations")),
@@ -274,9 +277,11 @@ flux_f_plot2 <- ggplot(filter(flux_f_month, !is.na(Latitude_bin))) +
   theme(strip.text.y = element_text(angle = 0), 
         strip.background = element_blank(), 
         plot.title = element_text(hjust = 0.5, size = 10), 
-        axis.text = element_text(size = 7), 
+        axis.text.x = element_text(size = 7), 
+        axis.text.y = element_text(size = 5), 
         panel.grid.major.x = element_blank(), 
-        panel.grid.minor = element_blank())
+        panel.grid.minor = element_blank()) +
+  theme(legend.position = "none")
 
 print(flux_f_plot2)
 
@@ -292,37 +297,42 @@ conc_f_month <- conc_f %>%
   group_by(Latitude_bin, month) %>%
   summarize(n_obs = sum(n_obs)) %>%
   mutate(month_abb = factor(month.abb[as.numeric(month)], month.abb[1:12]), 
-         Latitude_bin_flip = factor(Latitude_bin, rev(levels(Latitude_bin))))
+         Latitude_bin_flip = factor(Latitude_bin, rev(levels(Latitude_bin))), 
+         type = factor("Concentration", levels = c("Concentration", "Both", "Flux")))
 
 conc_f_plot2 <- ggplot(filter(conc_f_month, !is.na(Latitude_bin))) +
   theme_bw() + 
-  geom_col(aes(y = n_obs, x = month_abb), 
-           fill = "darkgoldenrod2", color = "grey10") +
+  theme_grime() + 
+  geom_col(aes(y = n_obs, x = month_abb, fill = type), 
+           # fill = "darkgoldenrod2",
+           color = "grey10") +
   facet_grid(rows = vars(Latitude_bin_flip), drop = FALSE) + 
   scale_y_sqrt(expand = expansion(mult = c(0,.1))) +
-  labs(y = expression(paste("Number of ", CH[4], " conc observations")),
+  labs(y = expression(paste("Number of ", CH[4], " concentration observations")),
        x = "Month", 
        facet = "Latitude",
        title = expression(paste("Number of concentration observations by month and latitude (", degree, ")"))) +
   theme(strip.text.y = element_text(angle = 0), 
         strip.background = element_blank(), 
         plot.title = element_text(hjust = 0.5, size = 10), 
-        axis.text = element_text(size = 7), 
+        axis.text.x = element_text(size = 7), 
+        axis.text.y = element_text(size = 5), 
         panel.grid.major.x = element_blank(), 
-        panel.grid.minor = element_blank())
+        panel.grid.minor = element_blank()) +
+  theme(legend.position = "none")
+  
 
 print(conc_f_plot2)
 
 ggsave(file.path(path_to_dropbox, "Figures", "Timeseries",
                  "CH4conc_frequency_by_latitude_month.png"), 
-       flux_f_plot2, 
+       conc_f_plot2, 
        height = 7.5, width = 4)
 
 
 
 both_f_month <- flux_f_month %>%
-  mutate(type = "Flux") %>%
-  full_join(mutate(conc_f_month, type = "Concentration"))
+  full_join((conc_f_month))
 
 
 
@@ -342,7 +352,8 @@ both_f_plot2 <- ggplot(filter(both_f_month, !is.na(Latitude_bin))) +
   theme(strip.text.y = element_text(angle = 0), 
         strip.background = element_blank(), 
         plot.title = element_text(hjust = 0.5, size = 10), 
-        axis.text = element_text(size = 7), 
+        axis.text.x = element_text(size = 7), 
+        axis.text.y = element_text(size = 5), 
         panel.grid.major.x = element_blank(), 
         panel.grid.minor = element_blank(), 
         legend.position = "none")
