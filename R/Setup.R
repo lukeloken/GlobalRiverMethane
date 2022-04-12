@@ -51,8 +51,8 @@ load(file.path(path_to_dropbox, "db_processingR",
 
 theme_grime <- function(){
   list(
-    scale_color_manual(values = c("#ff9f1c",  "#936639", "#a4ac86")), 
-    scale_fill_manual(values = c("#ff9f1c", "#936639", "#a4ac86"))
+    scale_color_manual(values = c("#ff9f1c",  "#936639", "#a4ac86"), drop = FALSE), 
+    scale_fill_manual(values = c("#ff9f1c", "#936639", "#a4ac86"), drop = FALSE)
   ) 
 }
 
