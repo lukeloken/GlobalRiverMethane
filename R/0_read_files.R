@@ -32,6 +32,23 @@ setdiff(unique(gis_df$Site_Nid), unique(gis_df2$Site_Nid))
 dim(gis_df)
 dim(gis_df2)
 
+#New GIS file that only contains lat, long, and elevation
+gis_df3 <- read_csv(file.path(path_to_dropbox, "db_processingR", 
+                             "GIS", 
+                             "methdb_z_estimated.csv")) %>%
+  mutate(Site_Nid = as.character(Site_Nid)) %>%
+  distinct()
+
+dim(gis_df3)
+
+length(unique(gis_df3$Site_Nid))
+length(unique(gis_df2$Site_Nid))
+length(unique(gis_df$Site_Nid))
+
+setdiff(unique(gis_df3$Site_Nid), unique(gis_df$Site_Nid))
+missing_sites <- setdiff(unique(gis_df$Site_Nid), unique(gis_df3$Site_Nid))
+
+
 #load methdb papers table
 papers_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "Papers",  guess_max = 250) 
@@ -53,12 +70,20 @@ sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                     sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
   # rename(Elevation_m = Elevation_m_reported) %>%
   mutate(Site_Nid = as.character(Site_Nid), 
-         Elevation_m = as.numeric(Elevation_m)) %>%
-  left_join(gis_df %>% 
-              select(Site_Nid, lat_new = lat, lon_new = lon, 
-                     elevation_m_new = z_m_combined, 
-                     subcatch_area_km, catch_area_km, slope_m_m) %>%
-              distinct(),
+         Elevation_m = as.numeric(Elevation_m)) 
+
+#Check is all sites are in GIS file
+setdiff(unique(sites_df$Site_Nid), unique(gis_df3$Site_Nid))
+setdiff(unique(gis_df3$Site_Nid), unique(sites_df$Site_Nid))
+
+filter(sites_df, !Site_Nid %in% missing_sites)
+
+sites_df <- sites_df %>%
+  left_join(gis_df3 %>% 
+              select(Site_Nid, 
+                     lat_new = lat_new, lon_new = lon_new, 
+                     # lat_old, lon_old,
+                     elevation_estimated_m),
             by = "Site_Nid")
 # 
 # dup_sites <- table(sites_df$Site_Nid)
@@ -81,8 +106,9 @@ concentrations <- read_excel(file.path(path_to_dropbox, MethDB_filename),
                              sheet = "MethDB_2_conc", guess_max = 20000) %>% 
   mutate(Site_Nid = as.character(Site_Nid),
          across(contains("Date_"), ~as.Date(.x))) %>%
-  left_join(select(sites_df, Site_Nid, Elevation_m)) %>%
-  left_join(select(gis_df, Site_Nid, elevation_m_new = z_m_combined)) %>% 
+  left_join(select(sites_df, Site_Nid, Elevation_m, 
+                   elevation_m_new = elevation_estimated_m)) %>%
+  # left_join(select(gis_df, Site_Nid, elevation_m_new = z_m_combined)) %>% 
   filter(!is.na(Publication_Nid) & !is.na(Site_Nid))
 
 
