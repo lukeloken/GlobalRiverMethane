@@ -89,7 +89,7 @@ key_gad <- as.character(labels.gad$Country_Name)
 names(key_gad) <- labels.gad$Country_ID
 
 #this is a file I made with better names for each variable in BASINAtlas
-new.names.atlas <- read_csv("original_raw_data/BASINatlas/pretty_names.csv")
+new.names.atlas <- read_csv("original_raw_data/pretty_names.csv")
 
 basin_atlas <- basin_atlas %>%
   # drop_na(clz_cl_smj) %>% 
