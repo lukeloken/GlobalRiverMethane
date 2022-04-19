@@ -5,7 +5,6 @@ library(tidyverse)
 library(broom)
 library(ggthemes)
 library(patchwork)
-#library(plotbiomes) #this is needed for the plot of biomes
 library(rnaturalearth)
 library(sf)
 library(lwgeom)
@@ -299,32 +298,7 @@ map_world +
   inset_element(n_lons, 0.012, .84, .94, 1.02)
 
 
-ggsave("man/figures/map_hist.png", scale = 1, dpi = 400)
-
-
-
-# figure of MAT vs MAP with global distribution ----
-  mat_map <- 
-  ggplot()+
-  #geom_hex(data= world_gis, bins=50,  aes(air_temp_sub_avg_celsius/10, precip_sub_mm))+
-  geom_polygon(data = Whittaker_biomes, 
-               aes(x = temp_c, y = precp_cm*10, fill = biome), 
-               colour = "gray98", size   = 1) +
-    scale_fill_manual(name   = "Whittaker biomes",
-                      breaks = names(Ricklefs_colors),
-                      labels = names(Ricklefs_colors),
-                      values = Ricklefs_colors)+
-    geom_point(data=gis_df, aes(air_temp_sub_avg_celsius/10, precip_sub_mm), alpha=.3, color="black")+
-#  scale_fill_viridis_c()+
-  theme_classic()+
-  labs(x="Mean average temperature (C)", y= "Mean average precipitation (mm)")+
-  theme(legend.position = c(0.3, 0.85), legend.text=element_text(size=10), 
-        legend.background = element_blank(),
-        legend.box.background = element_blank(),
-        legend.key = element_blank())+
-  guides(fill = guide_legend(title ="", ncol=1, keywidth=0.2,
-                             keyheight=0.1,
-                             default.unit="inch"))
+#ggsave("man/figures/map_hist.png", scale = 1, dpi = 400)
 
 
 ##### Assessment of how representative samples are of the whole world 
