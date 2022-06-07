@@ -2,6 +2,7 @@
 library(RColorBrewer)
 library(dplyr)
 library(ggplot2)
+library(tidyr)
 
 load(file.path(path_to_dropbox, "db_processingR", 
                "MethDB_tables_converted.rda"))
@@ -19,6 +20,65 @@ ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) +
   geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
   theme_bw()
+
+Schuster_papers <- papers_df %>%
+  filter(Authorlastname == "Schuster") %>%
+  pull(Publication_Nid)
+
+Schuster_overlap_sites <- conc_df %>%
+  filter(Publication_Nid %in% Schuster_papers) %>%
+  select(Publication_Nid, Site_Nid, orig_CH4unit) %>%
+  distinct() %>%
+  group_by(Site_Nid) %>%
+  summarize(n_units = length(unique(orig_CH4unit))) %>%
+  filter(n_units >1) %>%
+  pull(Site_Nid)
+    
+              
+
+ggplot(filter(conc_df, 
+              Publication_Nid %in% Schuster_papers, 
+              Site_Nid %in% Schuster_overlap_sites),
+       aes(x = orig_CH4unit, y = CH4mean)) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
+  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw() +
+  ggtitle("Schuster USGS Reports") +
+  labs(y = "CH4mean (uM)")
+
+ggplot(filter(conc_df, 
+              Publication_Nid %in% Schuster_papers, 
+              # Site_Nid %in% Schuster_overlap_sites
+              ), 
+       aes(x = Date_start, y = CH4mean, color = orig_CH4unit)) + 
+  facet_wrap(~Site_Name) + 
+  geom_point(alpha = 0.6) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw() +
+  ggtitle("Schuster USGS Reports") +
+  theme(strip.text = element_text(size = 8)) +
+  labs(y = "CH4mean (uM)")
+
+
+conc_df_ppm <- filter(conc_df, orig_CH4unit == "ppm CH4")
+
+
+
+papers_df_ppm <- filter(papers_df, Publication_Nid %in% unique(conc_df_ppm$Publication_Nid))
+
+data.frame(papers_df_ppm)
+
+conc_df_ppm <- conc_df_ppm %>%
+  left_join(distinct(select(papers_df_ppm, Publication_Nid, Authorlastname, PubYear ))) %>%
+  unite(col = "AuthorYear", c("Authorlastname", "PubYear"))
+
+ggplot(conc_df_ppm, aes(x = as.factor(AuthorYear), y = CH4mean)) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
+  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
+  theme_bw() +
+  coord_flip()
 
 highCH4 <- filter(conc_df, !is.na(CH4mean), CH4mean > 0, CH4mean != -999999) %>%
   filter(# orig_CH4unit %in% c("mol/L")
@@ -42,6 +102,7 @@ ggplot(CH4_df, aes(x = orig_CH4unit, y = CH4mean)) +
   theme_bw() + 
   scale_color_manual(values = c(brewer.pal(length(unique(CH4_df$Publication_Nid)) - 1, 
                                            "Dark2"), "lightgrey")) 
+
 
 #N2O
 ggplot(conc_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
