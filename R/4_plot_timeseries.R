@@ -349,20 +349,24 @@ both_f_plot2 <- ggplot(filter(both_f_month, !is.na(Latitude_bin))) +
   labs(y = expression(paste("Number of observations")),
        x = "Month", 
        title = expression(paste("Number of observations by month and latitude (", degree, ")"))) +
-  theme(strip.text.y = element_text(angle = 0), 
+  theme(strip.text.y = element_text(angle = 0, size = 12), 
         strip.background = element_blank(), 
-        plot.title = element_text(hjust = 0.5, size = 10), 
+        plot.title = element_text(hjust = 0.5, size = 12), 
         axis.text.x = element_text(size = 7), 
         axis.text.y = element_text(size = 5), 
+        strip.text.x = element_text(size = 12),
+        axis.title = element_text(size =12),
         panel.grid.major.x = element_blank(), 
         panel.grid.minor = element_blank(), 
-        legend.position = "none")
+        legend.position = "none") + 
+  theme(panel.spacing = unit(0.1, "lines"))
 
 print(both_f_plot2)
 
 ggsave(file.path(path_to_dropbox, "Figures", "Timeseries",
                  "CH4concflux_frequency_by_latitude_month.png"), 
        both_f_plot2, 
-       height = 7.5, width = 6)
+       height = 7.5, width = 6, 
+       dpi = 600)
 
 
