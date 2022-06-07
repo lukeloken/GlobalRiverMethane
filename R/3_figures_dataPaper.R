@@ -5,7 +5,6 @@ library(tidyverse)
 library(broom)
 library(ggthemes)
 library(patchwork)
-#library(plotbiomes) #this is needed for the plot of biomes
 library(rnaturalearth)
 library(sf)
 library(lwgeom)
@@ -89,7 +88,7 @@ key_gad <- as.character(labels.gad$Country_Name)
 names(key_gad) <- labels.gad$Country_ID
 
 #this is a file I made with better names for each variable in BASINAtlas
-new.names.atlas <- read_csv("original_raw_data/BASINatlas/pretty_names.csv")
+new.names.atlas <- read_csv("original_raw_data/pretty_names.csv")
 
 basin_atlas <- basin_atlas %>%
   # drop_na(clz_cl_smj) %>% 
@@ -159,8 +158,8 @@ sites_conc_flux %>%
 # Now we do a world map with ggplot. Adding the background layers as well as the sampled sites
 map_world <- 
   ggplot()+
-  geom_sf(data=map_sc, fill="gray20", colour=NA, size=0.5)+
-  geom_sf(data = rivers50 %>% filter(scalerank < 8), color= "steelblue4")+
+  geom_sf(data=map_sc, fill="oldlace", colour="gray90", size=0.5)+
+  geom_sf(data = rivers50 %>% filter(scalerank < 8), color= "dodgerblue3", size= .3)+
   geom_sf(data=lakes %>% filter(scalerank < 1), fill="aliceblue", color=NA)+
   geom_sf(data=sites_conc_flux %>% filter(type != "none"), 
           aes( color = type), 
@@ -168,13 +167,13 @@ map_world <-
   scale_color_manual(values = c("#936639", "#a4ac86", "#ff9f1c"), name="")+
   coord_sf(crs = 4087, xlim=c(-18026400, 21026400), ylim=c(-7062156, 10602156))+
   labs(color= "")+
-  theme_map()+
+  theme_void()+
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         #axis.ticks.x=element_blank(),
-        panel.background=element_rect(fill="white"),
-        legend.position=c(.12,.15),
-        legend.text = element_text(size=13),
+        panel.background = element_rect(fill = "white", colour = NA),
+        legend.position = c(.12,.15),
+        legend.text = element_text(size=13, color="black"),
         legend.justification = "center" )+
   guides(color = guide_legend(override.aes = list(size = 4, alpha = 1) ) )
 
@@ -258,7 +257,7 @@ together_lon <- lon_rivers %>%
 #Do a ggplot of columns for the density of observations and river area, first latitude and then longitude
 n_lats <- ggplot(together_lat, aes( x= lat, y=n, fill=type) )+
   geom_col(alpha=.5, position = "identity", width = 1)+
-  scale_fill_manual(  values = c("gray15",  "steelblue4"))+
+  scale_fill_manual(  values = c("gray15",  "dodgerblue3"))+
   theme_classic()+
   coord_flip()+
   scale_x_continuous(expand=c(0,0), breaks = c(-50, 0, 50), name="", limits = c(-50, 85))+
@@ -276,7 +275,7 @@ n_lats <- ggplot(together_lat, aes( x= lat, y=n, fill=type) )+
 
 n_lons <- ggplot(together_lon, aes( x= lon, y=n, fill=type))+
   geom_col(alpha=.5, position = "identity", width = 1)+
-  scale_fill_manual(  values = c("gray15",  "steelblue4"))+
+  scale_fill_manual(  values = c("gray15",  "dodgerblue3"))+
   theme_classic()+
   scale_x_continuous(expand=c(0,0), breaks = c(-120, -60, 0, 60, 120), name="", limits=c(-170, 180))+
   scale_y_continuous( expand=c(0,0), name="")+
@@ -284,10 +283,10 @@ n_lons <- ggplot(together_lon, aes( x= lon, y=n, fill=type))+
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
-        axis.line  = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks.x=element_blank(),
         axis.text.x=element_blank(),
         panel.border = element_blank(),
-        axis.ticks.x=element_blank(),
         panel.background = element_rect(fill = "transparent", color="transparent"), # bg of the panel
         plot.background = element_rect(fill = "transparent", color="transparent"))
 
@@ -299,32 +298,7 @@ map_world +
   inset_element(n_lons, 0.012, .84, .94, 1.02)
 
 
-ggsave("man/figures/map_hist.png", scale=1, dpi = 400)
-
-
-
-# figure of MAT vs MAP with global distribution ----
-  mat_map <- 
-  ggplot()+
-  #geom_hex(data= world_gis, bins=50,  aes(air_temp_sub_avg_celsius/10, precip_sub_mm))+
-  geom_polygon(data = Whittaker_biomes, 
-               aes(x = temp_c, y = precp_cm*10, fill = biome), 
-               colour = "gray98", size   = 1) +
-    scale_fill_manual(name   = "Whittaker biomes",
-                      breaks = names(Ricklefs_colors),
-                      labels = names(Ricklefs_colors),
-                      values = Ricklefs_colors)+
-    geom_point(data=gis_df, aes(air_temp_sub_avg_celsius/10, precip_sub_mm), alpha=.3, color="black")+
-#  scale_fill_viridis_c()+
-  theme_classic()+
-  labs(x="Mean average temperature (C)", y= "Mean average precipitation (mm)")+
-  theme(legend.position = c(0.3, 0.85), legend.text=element_text(size=10), 
-        legend.background = element_blank(),
-        legend.box.background = element_blank(),
-        legend.key = element_blank())+
-  guides(fill = guide_legend(title ="", ncol=1, keywidth=0.2,
-                             keyheight=0.1,
-                             default.unit="inch"))
+#ggsave("man/figures/map_hist.png", scale = 1, dpi = 400)
 
 
 ##### Assessment of how representative samples are of the whole world 
@@ -423,16 +397,16 @@ dat_repr_gis <- dat_repr %>%
   dplyr::select(-obs) %>% 
   left_join(basin_atlas %>% select(hybas_id, geometry), by ="hybas_id" ) %>% 
   st_sf() %>%
-  st_transform("+proj=eqearth +wktext") 
+  st_transform(4326) #st_transform("+proj=eqearth +wktext") 
 
 
-ggplot(dat_repr, aes(representativeness))+
+ggplot(dat_repr_gis, aes(representativeness))+
   geom_density()
 
  
 #download world map
 world <-  ne_download(scale = 110, type = 'land', category = 'physical', returnclass = "sf") %>%
-  st_transform("+proj=eqearth +wktext") 
+  st_transform(4326) #st_transform("+proj=eqearth +wktext") 
 
 #make a hex grid for the world and keep only terrestrial masses
 grid <- st_make_grid(
@@ -447,10 +421,11 @@ grid <- st_sf(index = 1:length(lengths(grid)), grid)
 
 
 
-#join the meth data to the grid
-repr_hexes <- st_join(dat_repr_gis, grid, join = st_intersects)
+#join the data to the grid
+repr_hexes <- dat_repr_gis %>% 
+  st_join(grid, join = st_intersects)
 
-#now aggregate all the meth data for each hex, do means and sum for area.
+#now aggregate all the  data for each hex, do mean value
 repr_hexes_avg <- repr_hexes %>% 
   st_drop_geometry() %>%
   group_by(index) %>%
@@ -459,24 +434,38 @@ repr_hexes_avg <- repr_hexes %>%
   st_sf() 
 
  
-ggplot() +
+map_rep <- ggplot() +
   geom_sf(data = repr_hexes_avg, color = NA, aes(fill = repr))+
-  geom_sf(data = rivers50 %>% filter(scalerank < 8), color= "steelblue4", size = .3)+
-  geom_sf(data=lakes %>% filter(scalerank < 1), fill="aliceblue", color=NA)+
-  scale_fill_distiller(type = "seq", direction = -1, palette = "Oranges", na.value = "gray",
+  geom_sf(data = world, color= "gray90", fill = NA)+
+  geom_sf(data = rivers50 %>% 
+            filter(scalerank < 8), color= "dodgerblue3", size = .3)+
+  geom_sf(data = lakes %>% 
+            filter(scalerank < 1), fill="aliceblue", color=NA)+
+  scale_fill_distiller(type = "seq", direction = -1, palette = "Oranges", na.value = "gray", #RdGy
      name = "Representativeness")+
-  coord_sf(xlim = c(-15000000, 16000000), ylim = c(-8600000, 8600000), expand = FALSE) +
+  coord_sf(crs = 4087, xlim=c(-18026400, 21026400), ylim=c(-7062156, 10602156))+
   guides(fill = guide_colourbar(title.position = "top"))+
   theme_void()+
-  theme(legend.position = "top",
+  theme(legend.position = c(.56, .11),
         legend.direction = "horizontal",
-        legend.key.height  = unit(.4, 'cm'),
-        legend.key.width =  unit(.8, 'cm'))
+        legend.key.height  = unit(.3, 'cm'),
+        legend.key.width =  unit(.9, 'cm'),
+        legend.title = element_text(size = 14, face = "bold"))
 
-ggsave("man/figures/map_repr.png", dpi=500)  
+map_sites <- map_world + 
+  inset_element(n_lats, .93, .045, 1.01, .915 ) +
+  inset_element(n_lons, 0.012, .84, .94, 1.02)
+
+
+maps_both <- map_sites +
+  map_rep + 
+  plot_layout(ncol=1, tag_level = 'keep')  +
+  plot_annotation(tag_levels = list(c('a', '', '', 'b'))) & 
+  theme(plot.tag.position = c(0, .92), plot.tag = element_text(size=17, face= "bold"))
+
+ggsave("man/figures/maps_both.png", maps_both, dpi = 500, scale = 1.3)  
   
               
               
-              
-              
+        
 
