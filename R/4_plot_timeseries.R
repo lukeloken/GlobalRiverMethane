@@ -233,7 +233,7 @@ conc_f_plot <- ggplot(filter(conc_f, !is.na(Latitude_bin))) +
 print(conc_f_plot)
 
 ggsave(file.path(path_to_dropbox, "Figures", "Timeseries", "CH4conc_frequency_by_latitude.png"), 
-       flux_f_plot, 
+       conc_f_plot, 
        height = 4.5, width = 4)
 
 
