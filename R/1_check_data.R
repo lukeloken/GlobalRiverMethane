@@ -22,7 +22,7 @@ ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) +
   theme_bw()
 
 Schuster_papers <- papers_df %>%
-  filter(Authorlastname == "Schuster") %>%
+  filter(Authorlastname %in% c("Schuster", "Herman-Mercer")) %>%
   pull(Publication_Nid)
 
 Schuster_overlap_sites <- conc_df %>%
@@ -51,21 +51,24 @@ ggplot(filter(conc_df,
               Publication_Nid %in% Schuster_papers, 
               # Site_Nid %in% Schuster_overlap_sites
               ), 
-       aes(x = Date_start, y = CH4mean, color = orig_CH4unit)) + 
+       aes(x = Date_start, y = CH4mean, color = as.character(Publication_Nid))) + 
   facet_wrap(~Site_Name) + 
   geom_point(alpha = 0.6) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
   theme_bw() +
-  ggtitle("Schuster USGS Reports") +
-  theme(strip.text = element_text(size = 8)) +
-  labs(y = "CH4mean (uM)")
+  ggtitle("Schuster and Herman-Mercer USGS Reports and Data Releases") +
+  theme(strip.text = element_text(size = 7, hjust = 0)) +
+  labs(y = "CH4mean (uM)", color = "Publication_Nid")
 
 
-conc_df_ppm <- filter(conc_df, orig_CH4unit == "ppm CH4")
+conc_df_ppm <- filter(conc_df, orig_CH4unit %in% c("ppm CH4", 
+                                                   "uatm CH4", 
+                                                   "%sat_CH4"))
 
 
 
-papers_df_ppm <- filter(papers_df, Publication_Nid %in% unique(conc_df_ppm$Publication_Nid))
+papers_df_ppm <- filter(papers_df, 
+                        Publication_Nid %in% unique(conc_df_ppm$Publication_Nid))
 
 data.frame(papers_df_ppm)
 
@@ -73,12 +76,40 @@ conc_df_ppm <- conc_df_ppm %>%
   left_join(distinct(select(papers_df_ppm, Publication_Nid, Authorlastname, PubYear ))) %>%
   unite(col = "AuthorYear", c("Authorlastname", "PubYear"))
 
+kh_Kuhn = getKh(7 + 273.15, "CH4") 
+Pressure_kuhn = estimate_pressure(2500)
+sat_CH4_kuhn = getSaturation(kh_Kuhn, 
+                             AtmP = Pressure_kuhn, 
+                             gas = "CH4")
+
+kh_CH4_avg = getKh(20 + 273.15, "CH4") 
+kh_CO2_avg = getKh(20 + 273.15, "CO2") 
+kh_N2O_avg = getKh(20 + 273.15, "N2O") 
+
+Pressure_avg = estimate_pressure(0)
+sat_CH4_avg = getSaturation(kh_CH4_avg, 
+                             AtmP = Pressure_avg, 
+                             gas = "CH4")
+sat_CO2_avg = getSaturation(kh_CO2_avg, 
+                            AtmP = Pressure_avg, 
+                            gas = "CO2")
+sat_N2O_avg = getSaturation(kh_N2O_avg, 
+                            AtmP = Pressure_avg, 
+                            gas = "N2O")
+
 ggplot(conc_df_ppm, aes(x = as.factor(AuthorYear), y = CH4mean)) + 
-  geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
-  geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
+  geom_jitter(alpha = 0.2, width = 0.3, height = 0, 
+              aes(color = orig_CH4unit)) + 
+  geom_boxplot(outlier.shape = NA, fill = NA, 
+               aes(color = orig_CH4unit),
+               lwd = 1) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
   theme_bw() +
-  coord_flip()
+  coord_flip() +
+  labs(y = "CH4 mean (uM)") +
+  geom_hline(yintercept = c(sat_CH4_avg), color = "red")
+
+
 
 highCH4 <- filter(conc_df, !is.na(CH4mean), CH4mean > 0, CH4mean != -999999) %>%
   filter(# orig_CH4unit %in% c("mol/L")
@@ -96,6 +127,7 @@ CH4_df <- conc_df %>%
   arrange(desc(Publication_Nid))
 
 ggplot(CH4_df, aes(x = orig_CH4unit, y = CH4mean)) + 
+  geom_hline(yintercept = sat_CH4_avg, linetype = "dashed") + 
   geom_jitter(alpha = 0.5, width = 0.3, height = 0, aes(color = Publication_Nid)) +
   # geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
@@ -106,6 +138,7 @@ ggplot(CH4_df, aes(x = orig_CH4unit, y = CH4mean)) +
 
 #N2O
 ggplot(conc_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
+  geom_hline(yintercept = sat_N2O_avg, linetype = "dashed") + 
   geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
   geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
@@ -134,6 +167,7 @@ N2O_df <- conc_df %>%
 
 
 ggplot(N2O_df, aes(x = orig_N2Ounit, y = N2Omean)) + 
+  geom_hline(yintercept = sat_CH4_avg, linetype = "dashed") + 
   geom_jitter(alpha = 0.5, width = 0.3, height = 0, aes(color = Publication_Nid)) +
   geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
@@ -148,6 +182,7 @@ ggplot(N2O_df, aes(x = orig_N2Ounit, y = N2Omean)) +
 
 #CO2
 ggplot(conc_df, aes(x = orig_CO2unit, y = CO2mean)) + 
+  geom_hline(yintercept = sat_CO2_avg, linetype = "dashed") + 
   geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
   geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
@@ -169,6 +204,7 @@ CO2_df <- conc_df %>%
   arrange(desc(Publication_Nid))
 
 ggplot(CO2_df, aes(x = orig_CO2unit, y = CO2mean)) + 
+  geom_hline(yintercept = sat_CO2_avg, linetype = "dashed") + 
   geom_jitter(alpha = 0.5, width = 0.3, height = 0, aes(color = Publication_Nid)) +
   # geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
@@ -178,6 +214,7 @@ ggplot(CO2_df, aes(x = orig_CO2unit, y = CO2mean)) +
 
 #CH4
 ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) + 
+  geom_hline(yintercept = sat_CH4_avg, linetype = "dashed") + 
   geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
   geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
@@ -186,6 +223,7 @@ ggplot(conc_df, aes(x = orig_CH4unit, y = CH4mean)) +
 #Look at ppm CH4 papers
 ggplot(filter(conc_df, orig_CH4unit == "ppm CH4"), aes(x = as.factor(Publication_Nid),
                                                        y = CH4mean)) + 
+  geom_hline(yintercept = sat_CH4_avg, linetype = "dashed") + 
   geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
   geom_boxplot(outlier.shape = NA, fill = NA, color = "darkblue", lwd = 1.5) + 
   scale_y_log10(breaks = 10^ seq(-10, 10, 1)) +
@@ -297,11 +335,8 @@ ggplot(N2O_flux_df, aes(x = N2O_Flux_unit, y = N2O_Flux_Mean)) +
 
 
 
-
-
-
-
 ggplot(conc_df, aes(x = CH4mean)) + 
+  geom_vline(xintercept = sat_CH4_avg, linetype = "dashed") + 
   facet_wrap(~orig_CH4unit, scales = "free_y") + 
   geom_histogram() + 
   # geom_jitter(alpha = 0.2, width = 0.3, height = 0, color = "red") + 
@@ -316,9 +351,8 @@ ggplot(conc_df, aes(x = CH4mean)) +
 ggplot(conc_df) +
   geom_histogram(aes(x = CH4mean)) +
   scale_x_log10() +
-  geom_vline(xintercept = 0.003)
-
-
+  geom_vline(xintercept = sat_CH4_avg, linetype = "dashed")
+  
 undersaturdated <- filter(conc_df, CH4mean < 0.003) %>%
   arrange(Publication_Nid, desc(CH4mean)) %>%
   select(c("Publication_Nid", "Site_Nid", "Site_Name", "CH4mean", "orig_CH4unit", "new_CH4unit"))
@@ -326,14 +360,14 @@ undersaturdated <- filter(conc_df, CH4mean < 0.003) %>%
 table(undersaturdated$Publication_Nid)
 
 CH4mean_2315 <- ggplot(filter(conc_df, Publication_Nid == "2315")) +
-  geom_hline(yintercept = 0.003) + 
+  geom_hline(yintercept = sat_CH4_avg, linetype = "dashed") + 
   geom_point(aes(x = Date_start, y = CH4mean)) +
   scale_y_log10() +
   facet_wrap(~Site_Name)  +
   ggtitle("Publication 2315")
 
 CH4mean_2309 <- ggplot(filter(conc_df, Publication_Nid == "2309")) +
-  geom_hline(yintercept = 0.003) + 
+  geom_hline(yintercept = sat_CH4_avg, linetype = "dashed") + 
   geom_point(aes(x = Date_start, y = CH4mean)) +
   scale_y_log10() +
   facet_wrap(~Site_Name) +
