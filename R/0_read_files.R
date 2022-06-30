@@ -12,15 +12,15 @@ unit_convert_table <- readRDS("R/unit_convert_table.rds")
 
 #load GIS data
 gis_df <- read_csv(file.path(path_to_dropbox, "db_processingR", 
-                           "methdb_explore", "data", 
-                           "methdb_gis.csv"))  %>%
+                             "methdb_explore", "data", 
+                             "methdb_gis.csv"))  %>%
   mutate(Site_Nid = as.character(Site_Nid))
 
 
 gis_df2 <- gis_df %>%
-   group_by(Site_Nid) %>%
-   summarize(across(everything(), ~.x[1]))
- 
+  group_by(Site_Nid) %>%
+  summarize(across(everything(), ~.x[1]))
+
 dub_sites <- which(table(gis_df$Site_Nid)>1)
 filter(gis_df, Site_Nid %in% names(dub_sites))
 
@@ -34,14 +34,16 @@ dim(gis_df2)
 
 #New GIS file that only contains lat, long, and elevation
 gis_df3 <- read_csv(file.path(path_to_dropbox, "db_processingR", 
-                             "GIS", 
-                             "methdb_z_estimated.csv")) %>%
+                              "GIS", 
+                              "methdb_z_estimated.csv")) %>%
   mutate(Site_Nid = as.character(Site_Nid)) %>%
   distinct()
 
 dim(gis_df3)
 
 length(unique(gis_df3$Site_Nid))
+
+#old gis files
 length(unique(gis_df2$Site_Nid))
 length(unique(gis_df$Site_Nid))
 
@@ -51,7 +53,7 @@ missing_sites <- setdiff(unique(gis_df$Site_Nid), unique(gis_df3$Site_Nid))
 
 #load methdb papers table
 papers_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
-                    sheet = "Papers",  guess_max = 250) 
+                        sheet = "Papers",  guess_max = 250) 
 
 last_row = which(papers_df$Title == "DELETED/REJECTED") - 1
 
@@ -67,7 +69,7 @@ names(papers_df) <- gsub(" ", "", names(papers_df))
 
 #load methdb site table
 sites_df <- read_excel(file.path(path_to_dropbox, MethDB_filename),
-                    sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
+                       sheet = "MethDB_2_sites", guess_max = 3500)  %>% 
   # rename(Elevation_m = Elevation_m_reported) %>%
   mutate(Site_Nid = as.character(Site_Nid), 
          Elevation_m = as.numeric(Elevation_m)) 
@@ -103,7 +105,7 @@ sites_df <- sites_df %>%
 #                                                "db_processingR", 
 #                                                "MethDB_sites_duplicated.csv"), 
 #           row.names = FALSE)
-          
+
 #rename columns
 names(sites_df) <- gsub(" ", "", names(sites_df))
 names(sites_df) <- gsub("\\(m\\)", "_m", names(sites_df))
@@ -164,7 +166,7 @@ fluxes <- read_excel(file.path(path_to_dropbox, MethDB_filename),
 #Change names of dates, seasons, and counts
 names(fluxes)[grepl("Date", names(fluxes))] <- c("Date_start", "Date_end")
 names(fluxes)[grepl("Season", names(fluxes))] <- c("Season")
-                                                   
+
 names(fluxes)[grepl("Count", names(fluxes))] <- paste0("SampleCount_", c("Diffusive", "Bubble")) 
 
 names(fluxes) <- gsub("\\..*","",names(fluxes))
@@ -225,11 +227,19 @@ save(conc_df, flux_df,
 conc_missing_SiteNID <- filter(conc_df, Site_Nid %in% setdiff(conc_df$Site_Nid, sites_df$Site_Nid)) 
 flux_missing_SiteNID <- filter(flux_df, Site_Nid %in% setdiff(flux_df$Site_Nid, sites_df$Site_Nid)) 
 
-write.csv(conc_missing_SiteNID, file.path(path_to_dropbox, "db_processingR",
-                                         "Conc_missing_SiteNid.csv"), row.names = FALSE)
+write.csv(conc_missing_SiteNID, file.path(path_to_dropbox, 
+                                          "db_processingR",
+                                          paste0("Conc_missing_SiteNid_",
+                                                 Sys.Date(),
+                                                 ".csv")),
+          row.names = FALSE)
 
-write.csv(flux_missing_SiteNID, file.path(path_to_dropbox, "db_processingR",
-                                          "Flux_missing_SiteNid.csv"), row.names = FALSE)
+write.csv(flux_missing_SiteNID, file.path(path_to_dropbox, 
+                                          "db_processingR",
+                                          paste0("Flux_missing_SiteNid", 
+                                                 Sys.Date(), 
+                                                 ".csv")),
+          row.names = FALSE)
 
 
 # load(file.path(path_to_dropbox, "db_processingR", 
@@ -238,32 +248,58 @@ write.csv(flux_missing_SiteNID, file.path(path_to_dropbox, "db_processingR",
 
 
 #output files for Yale and database
-papers_out <- papers_df
+papers_out <- papers_df %>%
+  rename(Author_last_name = Authorlastname, 
+         Pub_year = PubYear, 
+         Additional_data = `Additionaldata?`, 
+         Paper_DOI = PaperDOI, 
+         Data_DOI_primary = DataDOIprimary, 
+         Data_DOI_supporting = DataDOIsupporting)
 
 sites_out <- sites_df %>%
-  select(-`Basin/Region`, -Country, -Continent,
+  select(-Country, -Continent,
          -Land_use, -System_size, -Depth_m, 
-         -Width_m, -`avgQ_m3/s`) %>%
-  filter(!grepl("DIT", Channel_type), 
-         !grepl("CAN", Channel_type), 
-         !grepl("DD", Channel_type))
+         -Width_m) %>%
+  # filter(!grepl("DIT", Channel_type), 
+  #        !grepl("CAN", Channel_type), 
+  #        !grepl("DD", Channel_type)) %>%
+  rename(Aggregated = `Aggregated?`, 
+         N_sites_aggregated = NSitesAggregated, 
+         Basin_Region = `Basin/Region`, 
+        avgQ_m3_pers =  `avgQ_m3/s`
+  )
 
 conc_out <- conc_df %>%
-  left_join(select(sites_df, Site_Nid, Channel_type)) %>%
-  filter(Aggregated_Space != "Yes", 
-         !grepl("DIT", Channel_type), 
-         !grepl("CAN", Channel_type), 
-         !grepl("DD", Channel_type)) %>%
-  select(-Season, -CO2measurementtype, -FluxYesNo, -Channel_type)
+  # left_join(select(sites_df, Site_Nid, Channel_type)) %>%
+  # filter(Aggregated_Space != "Yes", 
+  #        !grepl("DIT", Channel_type), 
+  #        !grepl("CAN", Channel_type), 
+  #        !grepl("DD", Channel_type)) %>%
+  # select(-Channel_type) %>%
+  select(-Season, -CO2measurementtype, -FluxYesNo)
+
+names(conc_out) <- gsub("unit", "_unit", names(conc_out))
 
 
 flux_out <- flux_df %>%
-  left_join(select(sites_df, Site_Nid, Channel_type)) %>%
-  filter(Aggregated_Space != "Yes", 
-         !grepl("DIT", Channel_type), 
-         !grepl("CAN", Channel_type), 
-         !grepl("DD", Channel_type)) %>%
-  select(-Season, -Channel_type)
+  # left_join(select(sites_df, Site_Nid, Channel_type)) %>%
+  # filter(Aggregated_Space != "Yes", 
+  #        !grepl("DIT", Channel_type), 
+  #        !grepl("CAN", Channel_type), 
+  #        !grepl("DD", Channel_type)) %>%
+  # select(-Channel_type) %>%
+  select(-Season) %>%
+  rename(Total_Method = Totalmethod, 
+         orig_Diffusive_Flux_unit = Diffusive_Flux_unit, 
+         orig_Eb_CH4_Flux_unit = Eb_CH4_Flux_unit,
+         orig_Total_Flux_unit = Total_Flux_unit,
+         orig_CO2_Flux_unit = CO2_Flux_unit,
+         orig_N2O_Flux_unit = N2O_Flux_unit)
+
+names(flux_out) <- gsub("median", "Median", names(flux_out))
+names(flux_out) <- gsub("method", "Method", names(flux_out))
+names(flux_out) <- gsub("flux", "Flux", names(flux_out))
+
 
 setdiff(concentrations$Site_Nid, sites_df$Site_Nid)
 setdiff(conc_out$Site_Nid, sites_out$Site_Nid)
@@ -271,8 +307,10 @@ setdiff(conc_out$Site_Nid, sites_out$Site_Nid)
 setdiff(fluxes$Site_Nid, sites_df$Site_Nid)
 setdiff(flux_out$Site_Nid, sites_out$Site_Nid)
 
-conc_out_missing_SiteID <- filter(conc_out, Site_Nid %in% setdiff(conc_out$Site_Nid, sites_out$Site_Nid)) 
-flux_out_missing_siteID <- filter(flux_out, Site_Nid %in% setdiff(flux_out$Site_Nid, sites_out$Site_Nid)) 
+conc_out_missing_SiteID <- filter(conc_out, 
+                                  Site_Nid %in% setdiff(conc_out$Site_Nid, sites_out$Site_Nid)) 
+flux_out_missing_siteID <- filter(flux_out,
+                                  Site_Nid %in% setdiff(flux_out$Site_Nid, sites_out$Site_Nid)) 
 
 
 sites_out %>% data.frame() %>% head()
@@ -293,11 +331,11 @@ write.csv(papers_out, file.path(path_to_dropbox, "db_processingR",
           row.names = FALSE)
 
 write.csv(sites_out, file.path(path_to_dropbox, "db_processingR", 
-                                paste0("GRiMe_sites_", Sys.Date(), ".csv")), 
+                               paste0("GRiMe_sites_", Sys.Date(), ".csv")), 
           row.names = FALSE)
 
 write.csv(conc_out, file.path(path_to_dropbox, "db_processingR", 
-                               paste0("GRiMe_concentrations_", Sys.Date(), ".csv")), 
+                              paste0("GRiMe_concentrations_", Sys.Date(), ".csv")), 
           row.names = FALSE)
 
 write.csv(flux_out, file.path(path_to_dropbox, "db_processingR", 
