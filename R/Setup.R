@@ -38,17 +38,20 @@ if (MethDB_filename %in% list.files(path_to_dropbox)){
 }
 
 
-
 # load formatted and converted tables into your R environment
 load(file.path(path_to_dropbox, "db_processingR", 
                "MethDB_tables_converted.rda"))
 
-# theme_grime <- function(){
-#   list(
-#     scale_color_manual(values = c("darkgoldenrod2",  "steelblue3", "olivedrab3")), 
-#     scale_fill_manual(values = c("darkgoldenrod2", "steelblue3", "olivedrab3"))
-#   ) 
-# }
+# Find newest GRIME table and load into your R environment
+db_processing_files <- list.files(file.path(path_to_dropbox, "db_processingR"))
+grime_tables <- db_processing_files[grepl("GRiMe_tables_converted_Internal", db_processing_files)]
+grime_table_dates <- gsub("GRiMe_tables_converted_Internal_", "", grime_tables)
+grime_table_dates <- gsub(".rda", "", grime_table_dates) %>% as.Date()
+newest_file_number <- which(grime_table_dates == max(grime_table_dates, na.rm = TRUE))
+newest_file_name <- grime_tables[newest_file_number]
+load(file.path(path_to_dropbox, 
+               "db_processingR", 
+               newest_file_name))
 
 theme_grime <- function(){
   list(
