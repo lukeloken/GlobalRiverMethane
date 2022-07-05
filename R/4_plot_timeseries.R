@@ -348,7 +348,8 @@ both_f_plot2 <- ggplot(filter(both_f_month, !is.na(Latitude_bin))) +
              drop = TRUE) + 
   labs(y = expression(paste("Number of observations")),
        x = "Month", 
-       title = expression(paste("Number of observations by month and latitude (", degree, ")"))) +
+       # title = expression(paste("Number of observations by month and latitude (", degree, ")"))
+       ) +
   theme(strip.text.y = element_text(angle = 0, size = 12), 
         strip.background = element_blank(), 
         plot.title = element_text(hjust = 0.5, size = 12), 
@@ -363,9 +364,12 @@ both_f_plot2 <- ggplot(filter(both_f_month, !is.na(Latitude_bin))) +
 
 print(both_f_plot2)
 
+library(egg)
+plot_publish <- egg::ggarrange(both_f_plot2, right = "Latitude (degrees)")
+
 ggsave(file.path(path_to_dropbox, "Figures", "Timeseries",
                  "CH4concflux_frequency_by_latitude_month.png"), 
-       both_f_plot2, 
+       plot_publish, 
        height = 7.5, width = 6, 
        dpi = 600)
 
