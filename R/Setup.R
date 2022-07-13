@@ -7,6 +7,8 @@
 # path_to_dropbox <- "C:/Users/emsta/Dropbox/MethDB2.0" #Emily's folder
 path_to_dropbox <- "C:/Users/lloken/OneDrive - DOI/GlobalRiverMethane" #Luke's USGS computer
 
+library(dplyr)
+
 # path_to_dropbox <-  "C:/Users/gero0008/Dropbox/SCIENCE/PostDoc/MethDB2.0" #gerards pc
 
 # MethDB_filename <- "MethDB_EHS_18Jan21.xlsx"
