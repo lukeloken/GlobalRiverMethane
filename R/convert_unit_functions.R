@@ -11,7 +11,7 @@ estimate_pressure <- function(elevation){
 
 # Henry's Law constants from http://www.henrys-law.org
 # Temperature correction using van't Hoff equation , temperature is in (Kelvin)
-# LakeKh is in ("Kh, cp") = (mol/L*Atm) at STP
+# LakeKh is in ("Kh, cp") = (mol L-1 Atm-1) at STP
 
 getKh <- function(temperature, gas){
   Kh <- data.frame("O2" = c(1.3*10^-3, 1700))
@@ -64,7 +64,7 @@ getSaturation <- function(LakeKh, AtmP, gas){
   
   AtmosphereConc <-  unlist(Atmosphere[gas])[1]
   
-  EquilSaturation <- AtmosphereConc*LakeKh/AtmP #umol/L, mmol/m3
+  EquilSaturation <- AtmosphereConc*LakeKh*AtmP #umol/L, mmol/m3
   
   return(EquilSaturation)
 }
@@ -150,8 +150,8 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   concentrations_out <- concentrations_out %>%
     mutate(kh = getKh(WaterTempUsed + 273.15, "CH4"), 
            sat_CH4 = getSaturation(kh, AtmP = Pressure, gas = "CH4"),
-           factor = case_when(CH4unit == "ppm CH4" ~ kh/Pressure,
-                              CH4unit == "ppb CH4" ~ kh/Pressure/1000,
+           factor = case_when(CH4unit == "ppm CH4" ~ kh*Pressure,
+                              CH4unit == "ppb CH4" ~ kh*Pressure/1000,
                               CH4unit == "uatm CH4" ~ kh, 
                               CH4unit == "%sat_CH4" ~ sat_CH4/100, #Need to confirm this!!
                               !CH4unit %in% c("ppm CH4", "ppb CH4", "uatm CH4", "%sat_CH4")
@@ -172,8 +172,8 @@ convert_conc_units <- function(concentrations, unit_convert_table){
   concentrations_out <- concentrations_out %>%
     mutate(kh = getKh(WaterTempUsed + 273.15, "CO2"), 
            sat_CO2 = getSaturation(kh, AtmP = Pressure, gas = "CO2"),
-           factor = case_when(CO2units == "ppm CO2" ~ kh/Pressure,
-                              CO2units == "ppb CO2" ~ kh/Pressure/1000,
+           factor = case_when(CO2units == "ppm CO2" ~ kh*Pressure,
+                              CO2units == "ppb CO2" ~ kh*Pressure/1000,
                               CO2units == "uatm CO2" ~ kh, 
                               CO2units == "%sat_CO2" ~ sat_CO2/100, #Need to confirm this!!
                               !CO2units %in% c("ppm CO2", "ppb CO2", 
@@ -196,8 +196,8 @@ convert_conc_units <- function(concentrations, unit_convert_table){
     # filter(N2Ounits %in% c("ppm N2O", "ppb N2O", "uatm N2O")) %>%
     mutate(kh = getKh(WaterTempUsed + 273.15, "N2O"), 
            sat_N2O = getSaturation(kh, AtmP = Pressure, gas = "N2O"),
-           factor = case_when(N2Ounits == "ppm N2O" ~ kh/Pressure,
-                              N2Ounits == "ppb N2O" ~ kh/Pressure/1000,
+           factor = case_when(N2Ounits == "ppm N2O" ~ kh*Pressure,
+                              N2Ounits == "ppb N2O" ~ kh*Pressure/1000,
                               N2Ounits == "uatm N2O" ~ kh, 
                               N2Ounits == "%sat_N2O" ~ sat_N2O/100, #Need to confirm this!!
                               !N2Ounits %in% c("ppm N2O", "ppb N2O", 
@@ -213,7 +213,7 @@ convert_conc_units <- function(concentrations, unit_convert_table){
                                 "umol/L", 
                                 NA)) %>%
     rename(orig_N2Ounit = N2Ounits) %>%
-    select(-factor, -kh, #-sat_CO2, #this one is removed in the block above
+    select(-factor, -kh, -sat_N2O,
            -Pressure, -WaterTempUsed, 
            -Elevation_m, -elevation_m_new, -ElevationUsed)
   
