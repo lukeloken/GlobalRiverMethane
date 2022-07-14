@@ -12,7 +12,7 @@ library(readxl)
 
 
 # read /download files ----
-path_to_dropbox <-  "C:/Users/gero0008/Dropbox/SCIENCE/PostDoc/MethDB2.0" #gerards pc
+path_to_dropbox <-  "/Users/gdro0001/Dropbox/SCIENCE/PostDoc/MethDB2.0" #gerards pc
 # load formatted and converted tables of GRiMeDB into your R environment
 load(file.path(path_to_dropbox, "db_processingR", 
                "MethDB_tables_converted.rda"))
@@ -304,22 +304,54 @@ map_world +
 ##### Assessment of how representative samples are of the whole world 
   #select only the month we need and make new columns for where we have observations or not
   df_together <- basin_atlas %>%
-    mutate(type = ifelse(hybas_id %in% gis_df$hybas_id, "sampled", "world")) %>% 
-    st_drop_geometry()
+    st_drop_geometry() %>% 
+    mutate(type = ifelse(hybas_id %in% gis_df$hybas_id, "sampled", "world")) %>%
+    dplyr::select(hybas_id, type, q_avg_m3s:hdi_sub, -ends_with(c("s01", "s02", "s03", "s04", "s05", "s06", 
+                                                                  "s07", "s08", "s09", "s10", "s11", "s12")),
+                  -contains(c("up", "max", "min", "gdp")), -human_footprint_sub_93, -lake_area_catch_per) %>% 
+    mutate(across(everything(), ~replace(., . ==  -999 , 0)),
+           moisture_index_sub_avg = moisture_index_sub_avg+ 100,
+           elevation_sub_average_m = elevation_sub_average_m + 415,
+           air_temp_sub_avg_celsius = air_temp_sub_avg_celsius + 262) 
+
+  names(df_together) %>% sort()
   
+  df_together %>% 
+    select(-c(hybas_id, type)) %>% 
+    select_if(is.numeric) %>%
+    pivot_longer(cols = everything(), names_to = "variable", values_to = "value" ) %>% 
+    ggplot(aes(value))+
+    geom_histogram(bins = 80) +
+    theme_classic()+
+    facet_wrap(~variable, scales='free')
   
-  # We do a PCA of the global dataset
-  pca_all <- df_together %>% 
+  vars_to_log <- df_together %>% 
+    select_if(is.numeric) %>%
+    select(contains(
+    c("aridity_index_sub", "cover_sub", "glacier_sub_per", "gradient_stream_sub_dmkm", "human_population_sub", 
+      "irrigated_area_sub_per", "karst_sub_per", "night_lights_sub_dgn", "vegetation", "protected_area", "q_avg_m3s",
+      "reservoir_vol_millionm3", "river_area_sub_ha", "river_regulation_per", "river_volume_sub_thousandm3", 
+      "road_density_sub_meterskm2", "soil_erosion_sub_kghectareyear", "soil_org_carbon_sub_tonneshectare", "urban_extent_sub_per"
+      ))) %>%
+    colnames(.)
+  
+  df_together_log <- df_together %>% 
+    mutate(across(all_of(vars_to_log), ~log(.x + 1))) 
+ 
+df_together %>% 
+  summarise(across(where(is.numeric), min))
+  
+
+    
+  
+    # We do a PCA of the global dataset
+  pca_all <- df_together_log %>% 
     select_if(is.numeric) %>% #we keep numeric variables, and remove the monthly ones.
-    dplyr::select(q_avg_m3s:hdi_sub, -ends_with(c("s01", "s02", "s03", "s04", "s05", "s06", 
-                                       "s07", "s08", "s09", "s10", "s11", "s12")),
-                  -contains(c("up", "max", "min", "gdp")), -human_footprint_sub_93) %>% 
-    mutate(across(everything(), ~replace(., . ==  -999 , 0))) %>% 
     scale() %>% 
     prcomp()
   
   
-  #30 axis to get to 90% of variation
+  #26 axis to get to 90% of variation
   summary(pca_all)
   
   #List of the PCs
@@ -339,7 +371,9 @@ map_world +
   #make a vector of all possible combinations
   combinations <- selected_pcas %>% 
     expand(crossing(PC, PC_rep)) %>% 
-    filter(PC != PC_rep)
+    filter(PC != PC_rep) %>% 
+    filter(!duplicated(paste0(pmax(PC, PC_rep), pmin(PC, PC_rep))))
+  
   
   #prepare an empty df to save results
   dat_repr <- tibble(hybas_id = df_together$hybas_id,
@@ -347,7 +381,9 @@ map_world +
   
   
   #in case you want to save a plot of each step set this to true
-  plot_the_space = FALSE
+  plot_the_space = TRUE
+  
+  plot_list <- list()
   
   #now we do a loop to run it for all combinations of PC axis, (800)
   for(i in 1:length(combinations$PC)){
@@ -371,17 +407,20 @@ map_world +
     #make a plot of the space, optional parameter
     if(plot_the_space == TRUE){
       
-      ggplot()+
+   plot <- 
+     ggplot()+
         geom_hex(data = pca_df_selected %>% filter(type == "world"), 
                  aes(PC_x, PC_y))+
-        geom_polygon(data = hull, aes(PC_x, PC_y), alpha = 0.4, , color= "red3")+
+        geom_polygon(data = hull, aes(PC_x, PC_y), alpha = 0.4, color= "red3")+
         geom_point(data = pca_df_selected %>% filter(type == "sampled"), 
                    aes(PC_x, PC_y), alpha=.5, color= "red3")+
         scale_fill_viridis_c()+
         theme_classic()+
         labs(x = paste(PC_to_select[1]), y = paste(PC_to_select[2]),
              title= paste(PC_to_select[1], "x", PC_to_select[2]))
-      ggsave(paste0( "man/figures/PCAs_examples/", PC_to_select[1], "x", PC_to_select[2], ".png") )
+   
+   plot_list[[i]] <- plot   
+   #ggsave(paste0( "man/figures/PCAs_examples/", PC_to_select[1], "x", PC_to_select[2], ".png") )
     }
     
     #update the file
@@ -391,7 +430,16 @@ map_world +
     print(paste("done ",i ,"of", length(combinations$PC) ))
     
   }
-  
+
+plot_list[[1]]  
+
+library(cowplot)
+allplots <- do.call(plot_grid, c(plot_list, 
+                     align = "h",
+                     axis = 'tb'))
+
+ggsave("man/figures/allin1.pdf" ,allplots, width = 100, height = 100, limitsize = FALSE)
+    
 dat_repr_gis <- dat_repr %>% 
   mutate(representativeness = obs/length(combinations$PC)) %>% 
   dplyr::select(-obs) %>% 
@@ -418,8 +466,6 @@ grid <- st_make_grid(
   st_intersection(world)
 
 grid <- st_sf(index = 1:length(lengths(grid)), grid) 
-
-
 
 #join the data to the grid
 repr_hexes <- dat_repr_gis %>% 
@@ -466,6 +512,4 @@ maps_both <- map_sites +
 ggsave("man/figures/maps_both.png", maps_both, dpi = 500, scale = 1.3)  
   
               
-              
-        
 
