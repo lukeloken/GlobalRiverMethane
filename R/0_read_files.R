@@ -84,8 +84,10 @@ setdiff(unique(gis_df3$Site_Nid), unique(sites_df$Site_Nid))
 
 filter(sites_df, Site_Nid %in% setdiff(unique(sites_df$Site_Nid), unique(gis_df3$Site_Nid))) %>% data.frame()
 
+aggregated_sites <- filter(sites_df, `Aggregated?` == "Yes") %>% pull(Site_Nid)
+filter(sites_df, `Aggregated?` == "Yes") %>% dim()
 
-filter(sites_df, !Site_Nid %in% missing_sites)
+filter(gis_df3, Site_Nid %in% aggregated)
 
 sites_df <- sites_df %>%
   left_join(gis_df3 %>% 
@@ -252,7 +254,7 @@ papers_out <- papers_df %>%
   rename(Author_last_name = Authorlastname, 
          Pub_year = PubYear, 
          Additional_data = `Additionaldata?`, 
-         Paper_DOI = PaperDOI, 
+         # Paper_DOI = PaperDOI, 
          Data_DOI_primary = DataDOIprimary, 
          Data_DOI_supporting = DataDOIsupporting)
 
@@ -266,8 +268,12 @@ sites_out <- sites_df %>%
   rename(Aggregated = `Aggregated?`, 
          N_sites_aggregated = NSitesAggregated, 
          Basin_Region = `Basin/Region`, 
-        avgQ_m3_pers =  `avgQ_m3/s`
-  )
+         avgQ_m3_pers =  `avgQ_m3/s`, 
+         Latitude_snapped = lat_new, 
+         Longitude_snapped = lon_new, 
+         Elevation_estimated_m = elevation_estimated_m
+  ) %>%
+  select(Publication_Nid:Channel_type, Latitude_snapped:Elevation_estimated_m, Comments, everything())
 
 conc_out <- conc_df %>%
   # left_join(select(sites_df, Site_Nid, Channel_type)) %>%
@@ -276,9 +282,31 @@ conc_out <- conc_df %>%
   #        !grepl("CAN", Channel_type), 
   #        !grepl("DD", Channel_type)) %>%
   # select(-Channel_type) %>%
-  select(-Season, -CO2measurementtype, -FluxYesNo)
+  select(-Season, -CO2measurementtype, 
+         -contains("aggregated", ignore.case = FALSE)) %>%
+  rename(WaterTemp_degC = WaterTemp_actual, 
+         WaterTemp_degC_estimated = WaterTemp_est) %>%
+  select(Publication_Nid:Aggregated_Time, 
+         FluxYesNo,
+         SampleCount, 
+         CH4min:CH4median,
+         CO2min:CO2median,
+         N2Omin:N2Omedian,
+         WaterTemp_degC:DO_percentsat, 
+         Q, 
+         contains("actual"), 
+         Comments, 
+         contains("new_"), 
+         contains("orig_"), 
+         everything())
+
 
 names(conc_out) <- gsub("unit", "_unit", names(conc_out))
+names(conc_out) <- gsub("_actual", "", names(conc_out))
+names(conc_out) <- gsub("actual", "", names(conc_out))
+
+
+conc_out %>% data.frame() %>% head()
 
 
 flux_out <- flux_df %>%
@@ -294,11 +322,26 @@ flux_out <- flux_df %>%
          orig_Eb_CH4_Flux_unit = Eb_CH4_Flux_unit,
          orig_Total_Flux_unit = Total_Flux_unit,
          orig_CO2_Flux_unit = CO2_Flux_unit,
-         orig_N2O_Flux_unit = N2O_Flux_unit)
+         orig_N2O_Flux_unit = N2O_Flux_unit) %>%
+  select(Publication_Nid:Diffusive_CH4_Flux_Median, 
+         SampleCount_Diffusive:Eb_CH4_Flux_median, 
+         SampleCount_Bubble:Total_CH4_Flux_Median, 
+         Total_Method:CO2_Flux_Median, 
+         CO2_flux_method, 
+         N2O_Flux_Min:N2O_Flux_Median, 
+         k_method:Comments, 
+         contains("new_"), 
+         contains("orig_"), 
+         everything()
+         )
 
 names(flux_out) <- gsub("median", "Median", names(flux_out))
 names(flux_out) <- gsub("method", "Method", names(flux_out))
 names(flux_out) <- gsub("flux", "Flux", names(flux_out))
+names(flux_out) <- gsub("Bubble", "Eb", names(flux_out))
+
+
+flux_out %>% data.frame() %>% head()
 
 
 setdiff(concentrations$Site_Nid, sites_df$Site_Nid)
@@ -313,6 +356,7 @@ flux_out_missing_siteID <- filter(flux_out,
                                   Site_Nid %in% setdiff(flux_out$Site_Nid, sites_out$Site_Nid)) 
 
 
+papers_out %>% data.frame() %>% head()
 sites_out %>% data.frame() %>% head()
 conc_out %>% data.frame() %>% head()
 flux_out %>% data.frame() %>% head()
