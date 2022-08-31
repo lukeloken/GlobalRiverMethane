@@ -37,7 +37,7 @@ unzip(zipped_atlas, exdir = unzipped_atlas)
 # transformation to planar is required, since sf library assumes planar projection. First we also set s2 to false
 sf_use_s2(FALSE)
 
-basin_atlas <- st_read( "original_raw_data/BASINatlas/BasinATLAS_v10/BasinATLAS_v10_shp/BasinATLAS_v10_lev10.shp") %>% 
+basin_atlas <- st_read( "original_raw_data/BASINatlas/BasinATLAS_v10/BasinATLAS_v10_shp/BasinATLAS_v10_lev12.shp") %>% 
   st_transform( 2163)  
 
 #Due to the shitty constrain on name lengths in the variables of shapefiles, are nearly impossible to understand. 
@@ -163,7 +163,7 @@ map_world <-
   geom_sf(data=lakes %>% filter(scalerank < 1), fill="aliceblue", color=NA)+
   geom_sf(data=sites_conc_flux %>% filter(type != "none"), 
           aes( color = type), 
-          size=2, alpha=.7)+
+          size = 1, alpha = .7)+
   scale_color_manual(values = c("#936639", "#a4ac86", "#ff9f1c"), name="")+
   coord_sf(crs = 4087, xlim=c(-18026400, 21026400), ylim=c(-7062156, 10602156))+
   labs(color= "")+
@@ -211,13 +211,13 @@ sites_lon <- sites_conc_flux %>%
 basin_atlas_good <- st_is_valid(basin_atlas, reason = FALSE)
 
 #check how many sites we filtered and the total
-length(basin_atlas_good) - sum(basin_atlas_good)
+length(basin_atlas_good) - sum(basin_atlas_good, na.rm = TRUE)
 length(basin_atlas$hybas_id)
 
 # And now we do the same aggregation by lat/lon bands, using river area. 
 #We remove first a fraction of sites with conflicted geometries
 lat_rivers <- 
-  basin_atlas[basin_atlas_good,] %>% 
+  basin_atlas %>% #[basin_atlas_good,] %>% 
   st_transform(4326) %>% 
   mutate(start_point = st_startpoint(st_cast(., "MULTIPOINT")),
          lat = st_coordinates(start_point)[,2] %>%  round(0) ) %>%
@@ -227,7 +227,7 @@ lat_rivers <-
   dplyr::select(lat,  riv_area) 
 
 
-lon_rivers <- basin_atlas[basin_atlas_good,] %>% 
+lon_rivers <- basin_atlas %>% #[basin_atlas_good,] %>% 
   st_transform(4326) %>% 
   mutate(start_point = st_startpoint(st_cast(., "MULTIPOINT")),
          lon = st_coordinates(start_point)[,1] %>%  round(0) ) %>% 
@@ -381,7 +381,7 @@ df_together %>%
   
   
   #in case you want to save a plot of each step set this to true
-  plot_the_space = TRUE
+  plot_the_space = FALSE
   
   plot_list <- list()
   
@@ -433,13 +433,15 @@ df_together %>%
 
 plot_list[[1]]  
 
-library(cowplot)
-allplots <- do.call(plot_grid, c(plot_list, 
-                     align = "h",
-                     axis = 'tb'))
-
-ggsave("man/figures/allin1.pdf" ,allplots, width = 100, height = 100, limitsize = FALSE)
-    
+## Plot all PCs against ieach other
+#library(cowplot)
+#allplots <- do.call(plot_grid, c(plot_list, 
+#                     align = "h",
+#                     axis = 'tb'))
+#
+#ggsave("man/figures/allin1.pdf" ,allplots, width = 100, height = 100, limitsize = FALSE)
+ 
+   
 dat_repr_gis <- dat_repr %>% 
   mutate(representativeness = obs/length(combinations$PC)) %>% 
   dplyr::select(-obs) %>% 
@@ -509,7 +511,178 @@ maps_both <- map_sites +
   plot_annotation(tag_levels = list(c('a', '', '', 'b'))) & 
   theme(plot.tag.position = c(0, .92), plot.tag = element_text(size=17, face= "bold"))
 
-ggsave("man/figures/maps_both.png", maps_both, dpi = 500, scale = 1.3)  
-  
-              
+ggsave("man/figures/maps_both_xs.png", maps_both, dpi = 500, scale = 1.3)  
+
+
+# new figure for emily with Q, and other stuff
+library(scales)
+
+theme_grime <- function(){
+  list(
+    scale_color_manual(values = c("#ff9f1c",  "#936639", "#a4ac86"), drop = FALSE), 
+    scale_fill_manual(values = c("#ff9f1c", "#936639", "#a4ac86"), drop = FALSE)
+  ) 
+}
+
+conc_sites <- conc_df %>% 
+  left_join(sites_df, by = "Site_Nid")
+
+
+meth_lat <- conc_sites %>% 
+  filter(Q > 0, CH4mean > 0) %>% 
+  ggplot(aes(Latitude, CH4mean))+
+  geom_point(color = "#ff9f1c", alpha = .3)+
+  scale_y_log10(limits=c(0.0001, 100), 
+                label=trans_format("log10",math_format(10^.x)))+
+  theme_classic()+
+  labs(x= "Latitude", y = expression(CH[4]~(umol~L^-1)))
+
+
+conc_sites %>% 
+  filter(Q > 0, CH4mean > 0) %>% 
+  ggplot(aes(Q, CH4mean))+
+  geom_point(color = "#ff9f1c", alpha = .5)+
+  scale_x_log10(label=trans_format("log10",math_format(10^.x)),
+                breaks = c(0.0001, 0.01, 1, 100, 10000, 1000000))+
+  scale_y_log10(label=trans_format("log10",math_format(10^.x)),
+                limits=c(0.0001, 100))+
+  theme_classic()+
+  labs(x= expression(Discharge~(m^3~s^-1)), y = expression(CH[4]~(umol~L^-1)))
+
+
+mycolors <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set1"))(57)
+
+meth_q <- 
+conc_sites %>% 
+  filter(Q > 0, CH4mean > 0 ) %>% 
+  ggplot()+
+  geom_point(aes(Q, CH4mean ), size = 2, alpha = .1)+
+  geom_point(data = conc_sites %>% 
+               filter(Q > 0, CH4mean > 0 ) %>%
+               add_count(Site_Nid) %>%
+               filter(n > 30),
+             aes(Q, CH4mean , color= Site_Nid), size = 2, alpha = .3)+
+  geom_smooth(data = conc_sites %>% 
+                filter(Q > 0, CH4mean > 0 ) %>%
+                add_count(Site_Nid) %>%
+                filter(n > 30),
+              aes(Q, CH4mean , color= Site_Nid, group= Site_Nid), se=FALSE, method = "lm")+
+  scale_color_manual(values = mycolors)+
+  scale_x_log10(label=trans_format("log10",math_format(10^.x)),
+               breaks = c(0.0001, 0.01, 1, 100, 10000, 1000000))+
+  scale_y_log10(label=trans_format("log10",math_format(10^.x)),
+                limits=c(0.0001, 100))+
+  theme_classic()+
+  theme(legend.position = "none")+
+  labs(x= expression(Discharge~(m^3~s^-1)), y = expression(CH[4]~(umol~L^-1)))
+
+
+meth_order <- conc_sites %>% 
+  filter(Strahler_order> 0, CH4mean > 0) %>% 
+  ggplot(aes(Strahler_order, CH4mean, group = Strahler_order))+
+  geom_jitter(color = "#ff9f1c", alpha = .3)+
+  geom_boxplot(outlier.shape = NA, fill = NA)+
+  scale_y_log10(limits=c(0.0001, 100),
+                label=trans_format("log10",math_format(10^.x)))+
+  scale_x_continuous(breaks = 1:8)+
+  theme_classic()+
+  labs(x= "Strahler order", y = "")
+
+meth_catchment <- conc_sites %>% 
+  filter(CH4mean > 0, Catchment_size_km2 > 0.01) %>% 
+  ggplot(aes(Catchment_size_km2, CH4mean))+
+  geom_point(color = "#ff9f1c", alpha = .3)+
+  scale_y_log10(limits=c(0.0001, 100), 
+                label=trans_format("log10",math_format(10^.x)))+
+  scale_x_log10(label=trans_format("log10",math_format(10^.x)))+
+  theme_classic()+
+  labs(x= expression(Catchment~area~(km^2)), y="")
+
+meth_lat + meth_order + meth_q + meth_catchment  +
+  plot_layout(ncol = 2)
+
+ggsave("man/figures/river_size_conc.png", scale= .9)
+
+# same figure for fluxes  
+flux_sites <- flux_df %>% 
+  left_join(conc_df, by = c("Site_Nid", "Date_start")) %>% 
+  left_join(sites_df, by = "Site_Nid")
+
+
+meth_flux_lat <- flux_sites %>% 
+  filter(Q > 0, Diffusive_CH4_Flux_Mean > 0) %>% 
+  ggplot(aes(Latitude, Diffusive_CH4_Flux_Mean))+
+  geom_point(color = "#a4ac86", alpha = .3)+
+  scale_y_log10(limits=c(0.0001, 1000), 
+                label=trans_format("log10",math_format(10^.x)))+
+  theme_classic()+
+  labs(x= "Latitude", y = expression(CH[4]~emissions~(umol~m^-2~d^-1)))
+
+
+flux_sites %>% 
+  filter(Q > 0, Diffusive_CH4_Flux_Mean > 0) %>% 
+  ggplot(aes(Q, Diffusive_CH4_Flux_Mean))+
+  geom_point(color = "#a4ac86", alpha = .5)+
+  scale_x_log10(label=trans_format("log10",math_format(10^.x)),
+                breaks = c(0.0001, 0.01, 1, 100, 10000, 1000000))+
+  scale_y_log10(label=trans_format("log10",math_format(10^.x)),
+                limits=c(0.0001, 100))+
+  theme_classic()+
+  labs(x= expression(Discharge~(m^3~s^-1)), y = expression(CH[4]~emissions~(umol~m^-2~d^-1)))
+
+
+mycolors <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set1"))(15)
+
+meth_flux_q <- 
+  flux_sites %>% 
+  filter(Q > 0, Diffusive_CH4_Flux_Mean > 0 ) %>% 
+  ggplot()+
+  geom_point(aes(Q, Diffusive_CH4_Flux_Mean ), size = 2, alpha = .1)+
+  geom_point(data = flux_sites %>% 
+               filter(Q > 0, Diffusive_CH4_Flux_Mean > 0 ) %>%
+               add_count(Site_Nid) %>%
+               filter(n > 30),
+             aes(Q, Diffusive_CH4_Flux_Mean , color= Site_Nid), size = 2, alpha = .3)+
+  geom_smooth(data = flux_sites %>% 
+                filter(Q > 0, Diffusive_CH4_Flux_Mean > 0 ) %>%
+                add_count(Site_Nid) %>%
+                filter(n > 30),
+              aes(Q, Diffusive_CH4_Flux_Mean , color= Site_Nid, group= Site_Nid), se=FALSE, method = "lm")+
+  scale_color_manual(values = mycolors)+
+  scale_x_log10(label=trans_format("log10",math_format(10^.x)),
+                breaks = c(0.0001, 0.01, 1, 100, 10000, 1000000))+
+  scale_y_log10(label=trans_format("log10",math_format(10^.x)),
+                limits=c(0.0001, 1000))+
+  theme_classic()+
+  theme(legend.position = "none")+
+  labs(x= expression(Discharge~(m^3~s^-1)), y = expression(CH[4]~emissions~(umol~m^-2~d^-1)))
+
+
+meth_flux_order <- flux_sites %>% 
+  filter(Strahler_order> 0, Diffusive_CH4_Flux_Mean > 0) %>% 
+  ggplot(aes(Strahler_order, Diffusive_CH4_Flux_Mean, group = Strahler_order))+
+  geom_jitter(color = "#a4ac86", alpha = .3)+
+  geom_boxplot(outlier.shape = NA, fill = NA)+
+  scale_y_log10(limits=c(0.0001, 1000),
+                label=trans_format("log10",math_format(10^.x)))+
+  scale_x_continuous(breaks = 1:8)+
+  theme_classic()+
+  labs(x= "Strahler order", y = "")
+
+meth_flux_catchment <- flux_sites %>% 
+  filter(Diffusive_CH4_Flux_Mean > 0, Catchment_size_km2 > 0.01) %>% 
+  ggplot(aes(Catchment_size_km2, Diffusive_CH4_Flux_Mean))+
+  geom_point(color = "#a4ac86", alpha = .3)+
+  scale_y_log10(limits=c(0.0001, 1000), 
+                label=trans_format("log10",math_format(10^.x)))+
+  scale_x_log10(label=trans_format("log10",math_format(10^.x)))+
+  theme_classic()+
+  labs(x= expression(Catchment~area~(km^2)), y="")
+
+meth_flux_lat + meth_flux_order + meth_flux_q + meth_flux_catchment  +
+  plot_layout(ncol = 2)         
+
+
+ggsave("man/figures/river_size_flux.png", scale= .9)
+
 
