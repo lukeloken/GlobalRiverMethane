@@ -453,7 +453,10 @@ dat_repr_gis <- dat_repr %>%
 ggplot(dat_repr_gis, aes(representativeness))+
   geom_density()
 
- 
+dat_repr_gis %>% filter(representativeness <= 0.9)
+
+41207/1034073*100
+
 #download world map
 world <-  ne_download(scale = 110, type = 'land', category = 'physical', returnclass = "sf") %>%
   st_transform(4326) #st_transform("+proj=eqearth +wktext") 
@@ -685,4 +688,28 @@ meth_flux_lat + meth_flux_order + meth_flux_q + meth_flux_catchment  +
 
 ggsave("man/figures/river_size_flux.png", scale= .9)
 
+elev_comp_data <- basin_atlas %>% 
+  mutate(type= "All world") %>% 
+  select(type, elevation_sub_average_m) %>% 
+  bind_rows(
+    gis_df %>% 
+      mutate(type= "GRiMeDB") %>% 
+      select(type, elevation_sub_average_m)
+  )
+
+
+ggplot(elev_comp_data, aes(elevation_sub_average_m, color= type))+
+  geom_density()+
+  theme_bw()+
+  theme(legend.position = "top")
+
+elev_comp_data %>% 
+  drop_na(elevation_sub_average_m) %>% 
+  split(.$type) %>%
+  map_dfr(~ density( .$elevation_sub_average_m, from = -100, to = 6000, n = 2000)$y) %>% 
+  mutate(elevation = seq(from = -100, to = 6000, length.out = 2000)) %>% 
+  ggplot(aes(elevation,  (GRiMeDB - `All world`)*1000))+
+  geom_line()+
+  theme_bw()+
+  labs(x= "Elevation", y= "Representation of GRiMeDB relative \nto the global distribution of elevation")
 
