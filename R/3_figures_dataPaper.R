@@ -12,10 +12,13 @@ library(readxl)
 
 
 # read /download files ----
-path_to_dropbox <-  "/Users/gdro0001/Dropbox/SCIENCE/PostDoc/MethDB2.0" #gerards pc
-# load formatted and converted tables of GRiMeDB into your R environment
-load(file.path(path_to_dropbox, "db_processingR", 
-               "MethDB_tables_converted.rda"))
+path_grime <- "/Users/gdro0001/Downloads/knb-lter-ntl.420.1" # Put the path wherever you have downloaded GRiMeDB
+
+
+sites_df <- read_csv(file.path(path_grime, "GRiMe_sites.csv"))
+papers_df <- read_csv(file.path(path_grime, "GRiMe_sources.csv"))
+conc_df <- read_csv(file.path(path_grime, "GRiMe_concentrations.csv"))
+flux_df <- read_csv(file.path(path_grime, "GRiMe_fluxes.csv"))
 
 
 # Download the hydroatlas, from here: https://figshare.com/articles/dataset/HydroATLAS_version_1_0/9890531
@@ -111,7 +114,7 @@ basin_atlas <- basin_atlas %>%
 
 #and now we get the sites from GRiMeDB, turn it into a sf, and joint it with basin_atlas 
 gis_df <- sites_df %>% 
-  select(Site_Nid, Latitude, Longitude) %>% 
+  select(Site_ID, Latitude, Longitude) %>% 
   st_as_sf(coords = c("Longitude", "Latitude"),  crs = 4326) %>% 
   st_transform( 2163) %>% 
   st_join(basin_atlas, join = st_within)
@@ -129,14 +132,14 @@ lakes <- ne_download(scale = 50, type = 'lakes', category = 'physical', returncl
 
 #For plotting we will summarise how many observations of concs and flux per site
 sites_conc_flux <- sites_df %>% 
-  select(Site_Nid, Latitude, Longitude) %>% 
+  select(Site_ID, Latitude, Longitude) %>% 
   left_join(conc_df %>% 
-              drop_na(orig_CH4unit) %>% 
-              group_by(Site_Nid) %>% 
-              summarise(n_conc= n()), by= "Site_Nid" ) %>% 
+              drop_na(orig_CH4_unit) %>% 
+              summarise(n_conc= n(), .by= Site_ID), 
+            by= "Site_ID" ) %>% 
   left_join(flux_df %>% 
-              group_by(Site_Nid) %>% 
-              summarise(n_flux= n()), by= "Site_Nid"  ) %>% 
+              summarise(n_flux= n(), .by= Site_ID), 
+            by= "Site_ID"  ) %>% 
   mutate(
     n_conc = replace_na(n_conc, 0),
     n_flux = replace_na(n_flux, 0),
@@ -154,6 +157,34 @@ sites_conc_flux <- sites_df %>%
 sites_conc_flux %>% 
   group_by(type) %>% 
   tally()
+
+sites_flux_type <- flux_df %>% 
+  mutate( n_diffusive = ifelse(is.na(Diffusive_CH4_Flux_Mean) == FALSE | is.na(Diffusive_CH4_Flux_Median) == FALSE, 1, 0),
+          n_ebullitive = ifelse(is.na(Eb_CH4_Flux_Mean) == FALSE | is.na(Eb_CH4_Flux_Median) == FALSE, 1, 0),
+          n_total = ifelse(is.na(Total_CH4_Flux_Mean) == FALSE | is.na(Total_CH4_Flux_Median) == FALSE, 1, 0)) %>% 
+  group_by(Site_ID) %>% 
+  summarise(across(n_diffusive:n_total, sum)) %>% 
+  mutate(
+    n_diffusive = replace_na(n_diffusive, 0),
+    n_ebullitive = replace_na(n_ebullitive, 0),
+    n_total = replace_na(n_total, 0),
+    type = case_when(
+      n_diffusive > 0 & n_ebullitive > 0 ~ "both",
+      n_diffusive < 1 & n_ebullitive > 0 ~ "only ebullition",
+      n_diffusive > 0 & n_ebullitive < 1 ~ "only diffusion",
+      n_total > 0 & n_ebullitive < 1 & n_diffusive < 1~ "only total",
+      n_diffusive < 1 & n_ebullitive < 1 ~ "none"),
+    type = fct_relevel(type, "both", "only ebullition", "only diffusion", "only total", "none" )
+  ) %>% 
+  left_join(
+    sites_df %>% 
+      select(Site_ID, Latitude, Longitude) ) %>%
+  drop_na(Longitude) %>% 
+  st_as_sf( coords = c("Longitude", "Latitude"),  crs = 4326) %>%
+  st_transform("+proj=eqearth +wktext")
+  
+  
+  
 
 # Now we do a world map with ggplot. Adding the background layers as well as the sampled sites
 map_world <- 
@@ -479,8 +510,7 @@ repr_hexes <- dat_repr_gis %>%
 #now aggregate all the  data for each hex, do mean value
 repr_hexes_avg <- repr_hexes %>% 
   st_drop_geometry() %>%
-  group_by(index) %>%
-  summarise(repr = mean(representativeness, na.rm = TRUE)) %>% 
+  summarise(repr = mean(representativeness, na.rm = TRUE), .by = index) %>% 
   right_join(grid, by="index") %>%
   st_sf() 
 
@@ -517,7 +547,32 @@ maps_both <- map_sites +
 ggsave("man/figures/maps_both_xs.png", maps_both, dpi = 500, scale = 1.3)  
 
 
-# new figure for emily with Q, and other stuff
+# Map map of flux types 
+#map_world <- 
+  ggplot()+
+  geom_sf(data=map_sc, fill="oldlace", colour="gray90", size=0.5)+
+  geom_sf(data = rivers50 %>% filter(scalerank < 8), color= "dodgerblue3", size= .1)+
+  geom_sf(data=lakes %>% filter(scalerank < 1), fill="aliceblue", color=NA)+
+  geom_sf(data=sites_flux_type %>% filter(type != "none"), 
+          aes( color = type), 
+          size = 1.5, alpha = .7)+
+  scale_color_manual(values = c('#1b9e77','#d95f02','#7570b3','#e7298a'), name="")+
+  coord_sf(crs = 4087, xlim=c(-18026400, 21026400), ylim=c(-7062156, 10602156))+
+  labs(color= "")+
+  theme_void()+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        #axis.ticks.x=element_blank(),
+        panel.background = element_rect(fill = "white", colour = NA),
+        legend.position = c(.12,.15),
+        legend.text = element_text(size=13, color="black"),
+        legend.justification = "center" )+
+  guides(color = guide_legend(override.aes = list(size = 4, alpha = 1) ) )
+
+
+ggsave("man/figures/maps_flux_types.png",  dpi = 1000, scale = .6)  
+  
+  # new figure for emily with Q, and other stuff
 library(scales)
 
 theme_grime <- function(){
@@ -528,7 +583,7 @@ theme_grime <- function(){
 }
 
 conc_sites <- conc_df %>% 
-  left_join(sites_df, by = "Site_Nid")
+  left_join(sites_df, by = "Site_ID")
 
 
 meth_lat <- conc_sites %>% 
@@ -562,14 +617,14 @@ conc_sites %>%
   geom_point(aes(Q, CH4mean ), size = 2, alpha = .1)+
   geom_point(data = conc_sites %>% 
                filter(Q > 0, CH4mean > 0 ) %>%
-               add_count(Site_Nid) %>%
+               add_count(Site_ID) %>%
                filter(n > 30),
-             aes(Q, CH4mean , color= Site_Nid), size = 2, alpha = .3)+
+             aes(Q, CH4mean , color= as.character(Site_ID)), size = 2, alpha = .3)+
   geom_smooth(data = conc_sites %>% 
                 filter(Q > 0, CH4mean > 0 ) %>%
-                add_count(Site_Nid) %>%
+                add_count(Site_ID) %>%
                 filter(n > 30),
-              aes(Q, CH4mean , color= Site_Nid, group= Site_Nid), se=FALSE, method = "lm")+
+              aes(Q, CH4mean , color= as.character(Site_ID), group= Site_ID), se=FALSE, method = "lm")+
   scale_color_manual(values = mycolors)+
   scale_x_log10(label=trans_format("log10",math_format(10^.x)),
                breaks = c(0.0001, 0.01, 1, 100, 10000, 1000000))+
@@ -592,8 +647,8 @@ meth_order <- conc_sites %>%
   labs(x= "Strahler order", y = "")
 
 meth_catchment <- conc_sites %>% 
-  filter(CH4mean > 0, Catchment_size_km2 > 0.01) %>% 
-  ggplot(aes(Catchment_size_km2, CH4mean))+
+  filter(CH4mean > 0, Basin_size_km2 > 0.01) %>% 
+  ggplot(aes(Basin_size_km2, CH4mean))+
   geom_point(color = "#ff9f1c", alpha = .3)+
   scale_y_log10(limits=c(0.0001, 100), 
                 label=trans_format("log10",math_format(10^.x)))+
@@ -608,8 +663,8 @@ ggsave("man/figures/river_size_conc.png", scale= .9)
 
 # same figure for fluxes  
 flux_sites <- flux_df %>% 
-  left_join(conc_df, by = c("Site_Nid", "Date_start")) %>% 
-  left_join(sites_df, by = "Site_Nid")
+  left_join(conc_df, by = c("Site_ID", "Date_start")) %>% 
+  left_join(sites_df, by = "Site_ID")
 
 
 meth_flux_lat <- flux_sites %>% 
@@ -643,14 +698,14 @@ meth_flux_q <-
   geom_point(aes(Q, Diffusive_CH4_Flux_Mean ), size = 2, alpha = .1)+
   geom_point(data = flux_sites %>% 
                filter(Q > 0, Diffusive_CH4_Flux_Mean > 0 ) %>%
-               add_count(Site_Nid) %>%
+               add_count(Site_ID) %>%
                filter(n > 30),
-             aes(Q, Diffusive_CH4_Flux_Mean , color= Site_Nid), size = 2, alpha = .3)+
+             aes(Q, Diffusive_CH4_Flux_Mean , color= as.character(Site_ID)), size = 2, alpha = .3)+
   geom_smooth(data = flux_sites %>% 
                 filter(Q > 0, Diffusive_CH4_Flux_Mean > 0 ) %>%
-                add_count(Site_Nid) %>%
+                add_count(Site_ID) %>%
                 filter(n > 30),
-              aes(Q, Diffusive_CH4_Flux_Mean , color= Site_Nid, group= Site_Nid), se=FALSE, method = "lm")+
+              aes(Q, Diffusive_CH4_Flux_Mean , color= as.character(Site_ID), group= Site_ID), se=FALSE, method = "lm")+
   scale_color_manual(values = mycolors)+
   scale_x_log10(label=trans_format("log10",math_format(10^.x)),
                 breaks = c(0.0001, 0.01, 1, 100, 10000, 1000000))+
@@ -673,8 +728,8 @@ meth_flux_order <- flux_sites %>%
   labs(x= "Strahler order", y = "")
 
 meth_flux_catchment <- flux_sites %>% 
-  filter(Diffusive_CH4_Flux_Mean > 0, Catchment_size_km2 > 0.01) %>% 
-  ggplot(aes(Catchment_size_km2, Diffusive_CH4_Flux_Mean))+
+  filter(Diffusive_CH4_Flux_Mean > 0, Basin_size_km2 > 0.01) %>% 
+  ggplot(aes(Basin_size_km2, Diffusive_CH4_Flux_Mean))+
   geom_point(color = "#a4ac86", alpha = .3)+
   scale_y_log10(limits=c(0.0001, 1000), 
                 label=trans_format("log10",math_format(10^.x)))+
